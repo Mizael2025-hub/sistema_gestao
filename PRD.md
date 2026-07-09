@@ -751,10 +751,10 @@ find /backups -name "*.tar.gz" -mtime +30 -delete
 
 ### Sprint 4 — Paradas de máquina
 
-- [ ] Model `MachineStop` + `StopReason` (M2M).
-- [ ] Localizar produção por data/operador/máquina antes de registrar parada.
-- [ ] Cálculo de média de produção por hora líquido de paradas.
-- [ ] Listagem e relatório de paradas com filtros.
+- [X] Model `MachineStop` + `StopReason` (M2M).
+- [X] Localizar produção por data/operador/máquina antes de registrar parada.
+- [X] Cálculo de média de produção por hora líquido de paradas.
+- [X] Listagem e relatório de paradas com filtros.
 
 ### Sprint 5 — Empaste e consumos
 

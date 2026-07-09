@@ -13,7 +13,8 @@
             <li><a href="{% url 'catalogs:index' %}" class="menu_item {% if request.resolver_match.app_name == 'catalogs' %}active{% endif %}"><i data-lucide="settings-2"></i> Cadastros-base</a></li>
 
             <li class="menu_group">Produção</li>
-            <li><a href="{% url 'production:gridproduction_list' %}" class="menu_item {% if request.resolver_match.app_name == 'production' %}active{% endif %}"><i data-lucide="activity"></i> Teleiras (grades)</a></li>
+            <li><a href="{% url 'production:gridproduction_list' %}" class="menu_item {% if request.resolver_match.url_name|slice:15 == 'gridproduction' %}active{% endif %}"><i data-lucide="activity"></i> Teleiras (grades)</a></li>
+            <li><a href="{% url 'production:machinestop_list' %}" class="menu_item {% if request.resolver_match.url_name|slice:12 == 'machinestop' %}active{% endif %}"><i data-lucide="shield-alert"></i> Paradas de máquina</a></li>
 
             <li class="menu_group">Admin</li>
             <li><a href="/admin/" class="menu_item"><i data-lucide="shield"></i> Django Admin</a></li>

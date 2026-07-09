@@ -42,8 +42,60 @@
 
 <div class="btn_row">
     <a href="{% url 'production:gridproduction_list' %}" class="btn_apple btn_apple--ghost"><i data-lucide="arrow-left" class="icon_16"></i> Voltar à listagem</a>
-    {% if perms.production.change_gridproduction %}
-    <a href="{% url 'production:gridproduction_update' gp.pk %}" class="btn_apple"><i data-lucide="pencil" class="icon_16"></i> Editar</a>
+    {% if perms.production.add_machinestop %}
+    <a href="{% url 'production:machinestop_create' %}?gp={{ gp.pk }}" class="btn_apple"><i data-lucide="shield-alert" class="icon_16"></i> Registrar parada</a>
     {% endif %}
+    {% if perms.production.change_gridproduction %}
+    <a href="{% url 'production:gridproduction_update' gp.pk %}" class="btn_apple btn_apple--ghost"><i data-lucide="pencil" class="icon_16"></i> Editar</a>
+    {% endif %}
+</div>
+
+<div class="page_heading" style="margin-top:8px">
+    <div class="title" style="font-size:16px">Paradas de máquina vinculadas ({{ stops|length }})</div>
+    <div class="subtitle">Impacto automático na média de produção por hora (RF-P03)</div>
+</div>
+
+<div class="table_wrapper">
+    <table class="factory_table">
+        <thead>
+            <tr>
+                <th>Hora que parou</th>
+                <th>Hora que voltou</th>
+                <th>Duração</th>
+                <th>Motivo(s)</th>
+                <th>Observação</th>
+                <th class="actions">Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for stop in stops %}
+            <tr onclick="window.location.href='{% url 'production:machinestop_detail' stop.pk %}'">
+                <td class="col-strong">{{ stop.stop_start|date:"d/m/Y H:i" }}</td>
+                <td>{{ stop.stop_end|date:"d/m/Y H:i" }}</td>
+                <td><span class="status_badge alerta">{{ stop.duration_label }}</span></td>
+                <td>{{ stop.reasons_display|truncatechars:50 }}</td>
+                <td>{{ stop.note|truncatechars:50|default:'—' }}</td>
+                <td class="actions" onclick="event.stopPropagation()">
+                    <div class="cell_actions">
+                        <a href="{% url 'production:machinestop_detail' stop.pk %}" class="btn_apple btn_apple--ghost btn_apple--sm" title="Detalhe"><i data-lucide="eye" class="icon_16"></i></a>
+                        {% if perms.production.change_machinestop %}
+                        <a href="{% url 'production:machinestop_update' stop.pk %}" class="btn_apple btn_apple--ghost btn_apple--sm" title="Editar"><i data-lucide="pencil" class="icon_16"></i></a>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6">
+                <div class="empty_hint">
+                    <i data-lucide="shield-alert"></i>
+                    <div class="t">Nenhuma parada registrada para este apontamento</div>
+                    {% if perms.production.add_machinestop %}
+                    <div class="s"><a href="{% url 'production:machinestop_create' %}?gp={{ gp.pk %}">Registrar uma parada</a></div>
+                    {% endif %}
+                </div>
+            </td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
 {% endblock %}

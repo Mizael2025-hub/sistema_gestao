@@ -1,0 +1,90 @@
+{% extends 'base/base.html' %}
+{% load base_tags %}
+
+{% block title %}{{ page_title }} — {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page_heading">
+    <div class="title">{{ page_title }}</div>
+    <div class="subtitle">{{ page_subtitle }}</div>
+</div>
+
+<div class="factory_alert factory_alert--info">
+    <div class="pulse_dot" style="background: var(--status_info);"></div>
+    <span><strong>RF-P01:</strong> localize o apontamento de produção por <strong>data</strong>, <strong>operador</strong> e <strong>máquina</strong>, depois selecione o registro para registrar a parada.</span>
+</div>
+
+<form method="get" class="form_box">
+    <div class="form_grid">
+        <div class="input_group">
+            <label class="input_label" for="id_production_date">Data</label>
+            {{ locate_form.production_date|add_class:"industrial_input" }}
+            {% if locate_form.production_date.errors %}<ul class="field_errors">{% for e in locate_form.production_date.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+        <div class="input_group">
+            <label class="input_label" for="id_operator">Operador</label>
+            {{ locate_form.operator|add_class:"industrial_input" }}
+        </div>
+        <div class="input_group">
+            <label class="input_label" for="id_machine">Máquina</label>
+            {{ locate_form.machine|add_class:"industrial_input" }}
+        </div>
+    </div>
+    <div class="btn_row">
+        <button type="submit" class="btn_apple"><i data-lucide="search" class="icon_16"></i> Localizar produção</button>
+        <a href="{% url 'production:machinestop_list' %}" class="btn_apple btn_apple--ghost"><i data-lucide="x" class="icon_16"></i> Voltar</a>
+    </div>
+</form>
+
+{% if has_searched %}
+<div class="page_heading" style="margin-top:8px">
+    <div class="title" style="font-size:16px">Apontamentos encontrados ({{ productions|length }})</div>
+</div>
+
+<div class="table_wrapper">
+    <table class="factory_table">
+        <thead>
+            <tr>
+                <th>Data</th>
+                <th>Hora início</th>
+                <th>Hora fim</th>
+                <th>Modelo</th>
+                <th>Polaridade</th>
+                <th>Lote</th>
+                <th>Qtd.</th>
+                <th>Méd./h</th>
+                <th class="actions">Registrar parada</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in productions %}
+            <tr>
+                <td class="col-strong">{{ p.production_date|date:"d/m/Y" }}</td>
+                <td>{{ p.start_time|date:"H:i" }}</td>
+                <td>{{ p.end_time|date:"H:i" }}</td>
+                <td>{{ p.grid_model|default:'—' }}</td>
+                <td>
+                    {% if p.polarity == 'POS' %}<span class="polarity_chip polarity-chip-pos">Positiva</span>
+                    {% else %}<span class="polarity_chip polarity-chip-neg">Negativa</span>{% endif %}
+                </td>
+                <td><strong>{{ p.lot }}</strong></td>
+                <td>{{ p.quantity }}</td>
+                <td>{{ p.production_per_hour|default:'—' }}</td>
+                <td class="actions">
+                    <a href="{% url 'production:machinestop_create' %}?gp={{ p.pk }}" class="btn_apple btn_apple--sm"><i data-lucide="plus" class="icon_16"></i> Parada</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="9">
+                <div class="empty_hint">
+                    <i data-lucide="search"></i>
+                    <div class="t">Nenhum apontamento encontrado</div>
+                    <div class="s">Confira data, operador e máquina informados.</div>
+                </div>
+            </td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}
