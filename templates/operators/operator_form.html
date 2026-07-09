@@ -1,0 +1,41 @@
+{% extends 'base/base.html' %}
+{% load base_tags %}
+
+{% block title %}{{ page_title }} — {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page_heading">
+    <div class="title">{{ page_title }}</div>
+    <div class="subtitle">{{ page_subtitle }}</div>
+</div>
+
+<form method="post" class="form_box">
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="login_errors">{{ form.non_field_errors }}</div>{% endif %}
+
+    <div class="form_grid">
+        <div class="input_group">
+            <label class="input_label" for="id_name">Nome</label>
+            <input type="text" name="name" id="id_name" value="{{ form.name.value|default:'' }}" class="industrial_input" placeholder="Ex.: João da Silva" required maxlength="120">
+            {% if form.name.errors %}<ul class="field_errors">{% for e in form.name.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+        <div class="input_group">
+            <label class="input_label" for="id_user">Usuário vinculado</label>
+            {{ form.user|add_class:"industrial_input" }}
+            {% if form.user.errors %}<ul class="field_errors">{% for e in form.user.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+        <div class="input_group">
+            <label class="input_label" for="id_is_active">Ativo</label>
+            <select name="is_active" id="id_is_active" class="industrial_input">
+                <option value="True" {% if form.is_active.value %}selected{% endif %}>Ativo</option>
+                <option value="False" {% if form.is_active.value is False %}selected{% endif %}>Inativo</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="btn_row">
+        <button type="submit" class="btn_apple"><i data-lucide="save" class="icon_16"></i> Salvar</button>
+        <a href="{% url 'operators:operator_list' %}" class="btn_apple btn_apple--ghost"><i data-lucide="x" class="icon_16"></i> Cancelar</a>
+    </div>
+</form>
+{% endblock %}

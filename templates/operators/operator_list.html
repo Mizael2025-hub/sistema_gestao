@@ -1,0 +1,111 @@
+{% extends 'base/base.html' %}
+{% load base_tags %}
+
+{% block title %}Operadores — {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="list_head">
+    <div class="left">
+        <div class="page_heading">
+            <div class="title">{{ page_title }}</div>
+            <div class="subtitle">{{ page_subtitle }}</div>
+        </div>
+    </div>
+    <div class="right">
+        {% if perms.operators.add_operator %}
+        <a href="{% url 'operators:operator_create' %}" class="btn_apple"><i data-lucide="user-plus" class="icon_16"></i> Novo operador</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="list_filters">
+    <form method="get" class="filters_inline">
+        <div class="filters_grid">
+            <div class="input_group">
+                <label class="input_label" for="id_q">Buscar</label>
+                <input type="search" name="q" id="id_q" value="{{ request.GET.q }}" class="industrial_input" placeholder="Nome ou matrícula">
+            </div>
+            <div class="input_group">
+                <label class="input_label" for="id_ativo">Ativo</label>
+                <select name="ativo" id="id_ativo" class="industrial_input">
+                    <option value="">Todos</option>
+                    <option value="1" {% if request.GET.ativo == '1' %}selected{% endif %}>Ativos</option>
+                    <option value="0" {% if request.GET.ativo == '0' %}selected{% endif %}>Inativos</option>
+                </select>
+            </div>
+        </div>
+        <div class="filters_actions">
+            <button type="submit" class="btn_apple btn_apple--sm"><i data-lucide="search" class="icon_16"></i> Filtrar</button>
+            <a href="{% url 'operators:operator_list' %}" class="btn_apple btn_apple--ghost btn_apple--sm"><i data-lucide="x" class="icon_16"></i> Limpar</a>
+        </div>
+    </form>
+</div>
+
+<div class="table_wrapper">
+    <table class="factory_table">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Usuário</th>
+                <th>Status</th>
+                <th class="actions">Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for op in operators %}
+            <tr onclick="window.location.href='{% url 'operators:operator_detail' op.pk %}'">
+                <td class="col-strong">{{ op.name }}</td>
+                <td>{{ op.user|default:'—' }}</td>
+                <td>
+                    {% if op.is_active %}<span class="status_badge sucesso">Ativo</span>{% else %}<span class="status_badge neutro">Inativo</span>{% endif %}
+                </td>
+                <td class="actions" onclick="event.stopPropagation()">
+                    <div class="cell_actions">
+                        <a href="{% url 'operators:operator_detail' op.pk %}" class="btn_apple btn_apple--ghost btn_apple--sm" title="Detalhe"><i data-lucide="eye" class="icon_16"></i></a>
+                        {% if perms.operators.change_operator %}
+                        <a href="{% url 'operators:operator_update' op.pk %}" class="btn_apple btn_apple--ghost btn_apple--sm" title="Editar"><i data-lucide="pencil" class="icon_16"></i></a>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4">
+                    <div class="empty_hint">
+                        <i data-lucide="users"></i>
+                        <div class="t">Nenhum operador encontrado</div>
+                        <div class="s">Cadastre um operador ou ajuste os filtros.</div>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="pagination">
+    {% if page_obj.has_other_pages %}
+    <span class="count_muted">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }} · {{ page_obj.paginator.count }} registro(s)</span>
+    <div class="pages">
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.ativo %}&ativo={{ request.GET.ativo }}{% endif %}">‹ Anterior</a>
+        {% endif %}
+        {% for n in page_obj.paginator.page_range %}
+            {% if n >= page_obj.number|add:'-2' and n <= page_obj.number|add:'2' %}
+                {% if n == page_obj.number %}
+                    <span class="current">{{ n }}</span>
+                {% else %}
+                    <a href="?page={{ n }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.ativo %}&ativo={{ request.GET.ativo }}{% endif %}">{{ n }}</a>
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.ativo %}&ativo={{ request.GET.ativo }}{% endif %}">Próxima ›</a>
+        {% endif %}
+    </div>
+    {% else %}
+    <span class="count_muted">{{ operators|length }} registro(s)</span>
+    <div></div>
+    {% endif %}
+</div>
+{% endblock %}

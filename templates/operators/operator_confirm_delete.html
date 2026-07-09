@@ -1,0 +1,22 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Excluir operador — {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page_heading">
+    <div class="title">{{ page_title }}</div>
+    <div class="subtitle">{{ page_subtitle }}</div>
+</div>
+
+<form method="post" class="form_box">
+    {% csrf_token %}
+    <div class="factory_alert">
+        <div class="pulse_dot"></div>
+        <span>Tem certeza que deseja excluir o operador <strong>{{ object.name }}</strong>{% if object.registration %} ({{ object.registration }}){% endif %}? Esta ação não pode ser desfeita.</span>
+    </div>
+    <div class="btn_row">
+        <button type="submit" class="btn_apple btn_apple--erro"><i data-lucide="trash-2" class="icon_16"></i> Excluir</button>
+        <a href="{% url 'operators:operator_list' %}" class="btn_apple btn_apple--ghost"><i data-lucide="x" class="icon_16"></i> Cancelar</a>
+    </div>
+</form>
+{% endblock %}

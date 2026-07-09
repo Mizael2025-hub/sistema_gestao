@@ -1,0 +1,42 @@
+{% extends 'base/base.html' %}
+{% load base_tags %}
+
+{% block title %}{{ singular|capfirst }} — {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page_heading">
+    <div class="title">{{ singular|capfirst }}</div>
+    <div class="subtitle"><i data-lucide="{{ page_icon }}" class="icon_16"></i> Detalhe do registro</div>
+</div>
+
+<div class="table_wrapper">
+    <table class="factory_table">
+        <tbody>
+            {% for name,is_fk in visible_fields %}
+            <tr>
+                <th style="width:240px">{{ name }}</th>
+                <td>{% cell_value object name %}</td>
+            </tr>
+            {% endfor %}
+            <tr>
+                <th>Status</th>
+                <td>
+                    {% if object.is_active %}<span class="status_badge sucesso">Ativo</span>{% else %}<span class="status_badge neutro">Inativo</span>{% endif %}
+                </td>
+            </tr>
+            <tr><th>Criado em</th><td>{{ object.created_at|date:"d/m/Y H:i" }}</td></tr>
+            <tr><th>Atualizado em</th><td>{{ object.updated_at|date:"d/m/Y H:i" }}</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="btn_row">
+    <a href="{% url url_list %}" class="btn_apple btn_apple--ghost"><i data-lucide="arrow-left" class="icon_16"></i> Voltar</a>
+    {% if can_change %}
+    <a href="{% url url_update object.pk %}" class="btn_apple"><i data-lucide="pencil" class="icon_16"></i> Editar</a>
+    {% endif %}
+    {% if can_delete %}
+    <a href="{% url url_delete object.pk %}" class="btn_apple btn_apple--erro"><i data-lucide="trash-2" class="icon_16"></i> Excluir</a>
+    {% endif %}
+</div>
+{% endblock %}

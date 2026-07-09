@@ -1,0 +1,37 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Cadastros-base — {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page_heading">
+    <div class="title">{{ page_title }}</div>
+    <div class="subtitle">{{ page_subtitle }}</div>
+</div>
+
+<div class="grid_kpi">
+    <a href="{% url 'catalogs:shift_list' %}" class="kpi_card" style="text-decoration:none;color:inherit">
+        <div class="kpi_label">Turnos</div>
+        <div class="kpi_value" style="font-size:18px"><i data-lucide="clock" class="icon_16"></i> Abrir</div>
+    </a>
+    <a href="{% url 'catalogs:sector_list' %}" class="kpi_card" style="text-decoration:none;color:inherit">
+        <div class="kpi_label">Setores</div>
+        <div class="kpi_value" style="font-size:18px"><i data-lucide="building-2" class="icon_16"></i> Abrir</div>
+    </a>
+    <a href="{% url 'catalogs:machine_list' %}" class="kpi_card" style="text-decoration:none;color:inherit">
+        <div class="kpi_label">Máquinas</div>
+        <div class="kpi_value" style="font-size:18px"><i data-lucide="cpu" class="icon_16"></i> Abrir</div>
+    </a>
+    <a href="{% url 'catalogs:gridmodel_list' %}" class="kpi_card" style="text-decoration:none;color:inherit">
+        <div class="kpi_label">Modelos</div>
+        <div class="kpi_value" style="font-size:18px"><i data-lucide="battery-charging" class="icon_16"></i> Abrir</div>
+    </a>
+    <a href="{% url 'catalogs:leadalloy_list' %}" class="kpi_card" style="text-decoration:none;color:inherit">
+        <div class="kpi_label">Ligas</div>
+        <div class="kpi_value" style="font-size:18px"><i data-lucide="droplet" class="icon_16"></i> Abrir</div>
+    </a>
+    <a href="{% url 'catalogs:stopreason_list' %}" class="kpi_card" style="text-decoration:none;color:inherit">
+        <div class="kpi_label">Motivos de parada</div>
+        <div class="kpi_value" style="font-size:18px"><i data-lucide="shield-alert" class="icon_16"></i> Abrir</div>
+    </a>
+</div>
+{% endblock %}
