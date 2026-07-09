@@ -1,0 +1,49 @@
+{% extends 'base/base.html' %}
+{% load base_tags %}
+
+{% block title %}Produção de grade — {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page_heading">
+    <div class="title">Produção de grade — Lote {{ gp.lot }}</div>
+    <div class="subtitle"><i data-lucide="activity" class="icon_16"></i> Teleira · {{ gp.production_date|date:"d/m/Y" }}</div>
+</div>
+
+<div class="grid_kpi">
+    <div class="kpi_card"><div class="kpi_label">Máquina</div><div class="kpi_value" style="font-size:18px">{{ gp.machine|default:'—' }}</div></div>
+    <div class="kpi_card"><div class="kpi_label">Operador</div><div class="kpi_value" style="font-size:18px">{{ gp.operator|default:'—' }}</div></div>
+    <div class="kpi_card"><div class="kpi_label">Turno</div><div class="kpi_value" style="font-size:18px">{{ gp.shift|default:'—' }}</div></div>
+    <div class="kpi_card"><div class="kpi_label">Modelo</div><div class="kpi_value" style="font-size:18px">{{ gp.grid_model|default:'—' }}</div></div>
+    <div class="kpi_card"><div class="kpi_label">Polaridade</div>
+        <div class="kpi_value" style="font-size:16px">
+            {% if gp.polarity == 'POS' %}<span class="polarity_chip polarity-chip-pos">Positiva</span>
+            {% else %}<span class="polarity_chip polarity-chip-neg">Negativa</span>{% endif %}
+        </div>
+    </div>
+    <div class="kpi_card"><div class="kpi_label">Lote</div><div class="kpi_value" style="font-size:22px">{{ gp.lot }}</div></div>
+    <div class="kpi_card"><div class="kpi_label">Quantidade</div><div class="kpi_value">{{ gp.quantity }} <span class="kpi_unit">grades</span></div></div>
+    <div class="kpi_card"><div class="kpi_label">Média p/ hora</div><div class="kpi_value">{{ gp.production_per_hour }} <span class="kpi_unit">grades/h</span></div></div>
+</div>
+
+<div class="table_wrapper">
+    <table class="factory_table">
+        <tbody>
+            <tr><th style="width:240px">Data</th><td>{{ gp.production_date|date:"d/m/Y" }}</td></tr>
+            <tr><th>Hora início</th><td>{{ gp.start_time|date:"H:i" }}</td></tr>
+            <tr><th>Hora fim</th><td>{{ gp.end_time|date:"H:i" }}</td></tr>
+            <tr><th>Horas trabalhadas</th><td>{{ gp.duration_hours|floatformat:2 }} h</td></tr>
+            <tr><th>Horas paradas</th><td>{{ gp.stop_hours|floatformat:2 }} h</td></tr>
+            <tr><th>Horas líquidas</th><td>{{ gp.effective_hours|floatformat:2 }} h</td></tr>
+            <tr><th>Criado em</th><td>{{ gp.created_at|date:"d/m/Y H:i" }}</td></tr>
+            <tr><th>Atualizado em</th><td>{{ gp.updated_at|date:"d/m/Y H:i" }}</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="btn_row">
+    <a href="{% url 'production:gridproduction_list' %}" class="btn_apple btn_apple--ghost"><i data-lucide="arrow-left" class="icon_16"></i> Voltar à listagem</a>
+    {% if perms.production.change_gridproduction %}
+    <a href="{% url 'production:gridproduction_update' gp.pk %}" class="btn_apple"><i data-lucide="pencil" class="icon_16"></i> Editar</a>
+    {% endif %}
+</div>
+{% endblock %}
