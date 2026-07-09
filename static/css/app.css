@@ -202,12 +202,18 @@ body {
     outline: none;
     box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15);
 }
-select.industrial_input, textarea.industrial_input { appearance: none; }
-select.industrial_input {
+select.industrial_input:not([multiple]), textarea.industrial_input { appearance: none; }
+select.industrial_input:not([multiple]) {
     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2386868B' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg>");
     background-repeat: no-repeat;
     background-position: right 10px center;
     padding-right: 30px;
+}
+select[multiple].industrial_input {
+    padding: 8px 10px;
+    min-height: 140px;
+    appearance: auto;
+    background: var(--apple_surface);
 }
 textarea.industrial_input { min-height: 90px; resize: vertical; }
 

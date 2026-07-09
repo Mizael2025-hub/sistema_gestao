@@ -184,9 +184,8 @@ class MachineStopForm(forms.ModelForm):
         self.fields['stop_start'].input_formats = ['%Y-%m-%dT%H:%M']
         self.fields['stop_end'].input_formats = ['%Y-%m-%dT%H:%M']
         self.fields['reasons'].queryset = StopReason.objects.filter(is_active=True)
-        self.fields['reasons'].widget = forms.SelectMultiple(attrs={
-            'class': 'industrial_input', 'size': '6',
-        })
+        self.fields['reasons'].widget.attrs.setdefault('class', 'industrial_input')
+        self.fields['reasons'].widget.attrs.setdefault('size', '6')
         self.fields['note'].widget = forms.Textarea(attrs={
             'class': 'industrial_input', 'rows': '3',
         })

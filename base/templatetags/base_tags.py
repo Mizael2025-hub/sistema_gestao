@@ -20,7 +20,15 @@ register = template.Library()
 @register.filter(name='add_class')
 def add_class(field, css_class):
     if isinstance(field, BoundField):
-        return field.as_widget(attrs={**(field.field.widget.attrs or {}), 'class': css_class})
+        # Se o widget já tem a classe aplicada (via form __init__), usa __str__
+        # para preservar choices do SelectMultiple/Select (que dependem do
+        # queryset resolvido pelo BoundField). Caso contrário, aplica via attrs.
+        existing = field.field.widget.attrs.get('class', '')
+        if css_class in existing:
+            return str(field)
+        # Junta classes em vez de sobrescrever.
+        new_class = (existing + ' ' + css_class).strip() if existing else css_class
+        return field.as_widget(attrs={**(field.field.widget.attrs or {}), 'class': new_class})
     return field
 
 
