@@ -1,0 +1,22 @@
+{% load base_tags %}
+{# base\partials\form_generic.html — formulário create/update genérico aderente ao design system #}
+<form method="post" class="form_box">
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="login_errors">{{ form.non_field_errors }}</div>{% endif %}
+
+    <div class="form_grid">
+        {% for field in form %}
+            <div class="input_group">
+                <label class="input_label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field|add_class:"industrial_input" }}
+                {% if field.help_text %}<span class="help_text">{{ field.help_text }}</span>{% endif %}
+                {% if field.errors %}<ul class="field_errors">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="btn_row">
+        <button type="submit" class="btn_apple"><i data-lucide="save" class="icon_16"></i> {{ submit_label|default:"Salvar" }}</button>
+        {% if cancel_url %}<a href="{{ cancel_url }}" class="btn_apple btn_apple--ghost"><i data-lucide="x" class="icon_16"></i> Cancelar</a>{% endif %}
+    </div>
+</form>

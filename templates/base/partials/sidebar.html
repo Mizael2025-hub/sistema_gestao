@@ -1,0 +1,29 @@
+{# base\partials\sidebar.html #}
+<aside class="sidebar">
+    <div class="sidebar_brand">
+        <i data-lucide="factory"></i>
+        <span>{{ app_name }}</span>
+    </div>
+    <nav>
+        <ul class="sidebar_menu">
+            <li><a href="{% url 'base:home' %}" class="menu_item {% if request.resolver_match.url_name == 'home' %}active{% endif %}"><i data-lucide="layout-dashboard"></i> Dashboard</a></li>
+
+            <li class="menu_group">Cadastros</li>
+            <li><a href="{% url 'operators:operator_list' %}" class="menu_item {% if request.resolver_match.app_name == 'operators' %}active{% endif %}"><i data-lucide="users"></i> Operadores</a></li>
+            <li><a href="{% url 'catalogs:index' %}" class="menu_item {% if request.resolver_match.app_name == 'catalogs' %}active{% endif %}"><i data-lucide="settings-2"></i> Cadastros-base</a></li>
+
+            <li class="menu_group">Produção</li>
+            <li><a href="{% url 'production:gridproduction_list' %}" class="menu_item {% if request.resolver_match.app_name == 'production' %}active{% endif %}"><i data-lucide="activity"></i> Teleiras (grades)</a></li>
+
+            <li class="menu_group">Admin</li>
+            <li><a href="/admin/" class="menu_item"><i data-lucide="shield"></i> Django Admin</a></li>
+        </ul>
+
+        <form method="post" action="{% url 'logout' %}" class="menu_logout">
+            {% csrf_token %}
+            <button type="submit" class="menu_item menu_logout_btn">
+                <i data-lucide="log-out"></i> Sair
+            </button>
+        </form>
+    </nav>
+</aside>

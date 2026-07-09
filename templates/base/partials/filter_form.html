@@ -1,0 +1,20 @@
+{% load base_tags %}
+{# base\partials\filter_form.html — renderiza form de filtros #}
+{% if filter_form %}
+<div class="list_filters">
+    <form method="get" class="filters_inline">
+        <div class="filters_grid">
+            {% for field in filter_form %}
+                <div class="input_group">
+                    <label class="input_label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field|add_class:"industrial_input" }}
+                </div>
+            {% endfor %}
+        </div>
+        <div class="filters_actions">
+            <button type="submit" class="btn_apple btn_apple--sm"><i data-lucide="search" class="icon_16"></i> Filtrar</button>
+            <a href="?{% if request.GET.page %}page={{ request.GET.page }}{% endif %}" class="btn_apple btn_apple--ghost btn_apple--sm"><i data-lucide="x" class="icon_16"></i> Limpar</a>
+        </div>
+    </form>
+</div>
+{% endif %}

@@ -1,0 +1,33 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login — {{ app_name }}</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body>
+    <div class="login_shell">
+        <form method="post" class="login_card">
+            <div class="login_brand"><i data-lucide="factory"></i> {{ app_name }}</div>
+            <p class="login_help">Acesse com seu email corporativo.</p>
+
+            {% csrf_token %}
+            {% if form.non_field_errors %}<div class="login_errors">{{ form.non_field_errors }}</div>{% endif %}
+
+            <div class="input_group">
+                <label class="input_label" for="id_username">Email</label>
+                <input type="email" name="username" id="id_username" class="industrial_input" autofocus placeholder="seu.email@komotors.com" required>
+            </div>
+            <div class="input_group">
+                <label class="input_label" for="id_password">Senha</label>
+                <input type="password" name="password" id="id_password" class="industrial_input" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="btn_apple"><i data-lucide="log-in" class="icon_16"></i> Entrar</button>
+        </form>
+    </div>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

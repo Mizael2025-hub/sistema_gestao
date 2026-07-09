@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Referência - PCP e Chão de Fábrica</title>
+    <!-- Lucide Icons para Componentes Industriais com Traço Estilo Apple -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --apple_bg: #F5F5F7;
+            --apple_surface: #FFFFFF;
+            --apple_text: #1D1D1F;
+            --apple_text_secondary: #86868B;
+            --apple_border: #D2D2D7;
+            
+            /* Cores Semânticas Industriais (Sólidas e de Alto Contraste) */
+            --status_sucesso: #34C759;   /* Máquina Operando / OP Concluída */
+            --status_alerta: #FF9500;    /* Setup de Linha / Manutenção Preventiva */
+            --status_erro: #FF3B30;      /* Linha Parada / Falha de Qualidade */
+            --status_info: #0071E3;      /* Planejado pelo PCP */
+            
+            --radius_sm: 8px;
+            --radius_md: 12px;
+            --transition_fast: all 0.15s ease-in-out;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--apple_bg);
+            color: var(--apple_text);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* -------------------------------------------------------------------------- */
+        /* LAYOUT PRINCIPAL (SHELL OPACO)                                             */
+        /* -------------------------------------------------------------------------- */
+        .sidebar {
+            width: 260px;
+            background-color: var(--apple_surface);
+            border-right: 1px solid var(--apple_border);
+            display: flex;
+            flex-direction: column;
+            padding: 24px 16px;
+        }
+
+        .sidebar_brand {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 32px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sidebar_menu {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .menu_item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: var(--radius_sm);
+            text-decoration: none;
+            color: var(--apple_text);
+            font-size: 14px;
+            font-weight: 500;
+            transition: var(--transition_fast);
+        }
+
+        .menu_item:hover {
+            background-color: var(--apple_bg);
+        }
+
+        .menu_item.active {
+            background-color: var(--status_info);
+            color: white;
+        }
+
+        .main_container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            height: 60px;
+            background-color: var(--apple_surface);
+            border-bottom: 1px solid var(--apple_border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px;
+        }
+
+        .content_area {
+            flex: 1;
+            padding: 32px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* -------------------------------------------------------------------------- */
+        /* COMPONENTES E GRIDS INDUSTRIAL-DENSE                                       */
+        /* -------------------------------------------------------------------------- */
+        .grid_kpi {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+        }
+
+        .kpi_card {
+            background-color: var(--apple_surface);
+            border: 1px solid var(--apple_border);
+            border-radius: var(--radius_md);
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.01);
+        }
+
+        .kpi_label {
+            font-size: 12px;
+            color: var(--apple_text_secondary);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .kpi_value {
+            font-size: 28px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        /* Alertas de Chão de Fábrica */
+        .factory_alert {
+            background-color: #FFEBEA;
+            border: 1px solid var(--status_erro);
+            border-radius: var(--radius_sm);
+            padding: 14px 16px;
+            color: #D32F2F;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        @keyframes pulse_indicador {
+            0% { transform: scale(0.95); opacity: 0.4; }
+            50% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(0.95); opacity: 0.4; }
+        }
+        .pulse_dot {
+            width: 10px;
+            height: 10px;
+            background-color: var(--status_erro);
+            border-radius: 50%;
+            animation: pulse_indicador 2s infinite ease-in-out;
+        }
+
+        /* Formulários de Bipagem e Entrada */
+        .form_box {
+            background-color: var(--apple_surface);
+            border: 1px solid var(--apple_border);
+            border-radius: var(--radius_md);
+            padding: 24px;
+        }
+
+        .form_grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .input_group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .input_label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--apple_text);
+        }
+
+        .industrial_input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--apple_border);
+            border-radius: var(--radius_sm);
+            font-size: 14px;
+            background-color: var(--apple_surface);
+            transition: var(--transition_fast);
+        }
+
+        .industrial_input:focus {
+            border-color: var(--status_info);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15);
+        }
+
+        /* Tabelas Densas do PCP */
+        .table_wrapper {
+            background-color: var(--apple_surface);
+            border: 1px solid var(--apple_border);
+            border-radius: var(--radius_md);
+            overflow: hidden;
+        }
+
+        .factory_table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        .factory_table th {
+            background-color: var(--apple_bg);
+            padding: 12px 16px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--apple_text_secondary);
+            border-bottom: 1px solid var(--apple_border);
+        }
+
+        .factory_table td {
+            padding: 12px 16px;
+            font-size: 14px;
+            border-bottom: 1px solid var(--apple_border);
+        }
+
+        .factory_table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .factory_table tr:hover td {
+            background-color: rgba(0, 0, 0, 0.01);
+        }
+
+        /* Badges de Status Sólidas */
+        .status_badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status_badge.sucesso { background-color: #E6F7ED; color: var(--status_sucesso); }
+        .status_badge.alerta { background-color: #FFF4E5; color: var(--status_alerta); }
+        .status_badge.info { background-color: #E6F1FC; color: var(--status_info); }
+
+        /* Botões Apple-Pill */
+        .btn_apple {
+            background-color: var(--status_info);
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 980px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition_fast);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn_apple:hover {
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar_brand">
+            <i data-lucide="factory"></i>
+            <span>Motopeças Core</span>
+        </div>
+        <nav>
+            <ul class="sidebar_menu">
+                <li><a href="#" class="menu_item active"><i data-lucide="layout-dashboard"></i> Sequenciamento PCP</a></li>
+                <li><a href="#" class="menu_item"><i data-lucide="activity"></i> Chão de Fábrica</a></li>
+                <li><a href="#" class="menu_item"><i data-lucide="battery-charging"></i> Carga e Formação</a></li>
+                <li><a href="#" class="menu_item"><i data-lucide="shield-alert"></i> Controle de Qualidade</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- CONTENT WRAPPER -->
+    <div class="main_container">
+        <!-- HEADER -->
+        <header class="header">
+            <div class="header_title" style="font-weight: 600; font-size: 16px;">Monitoramento de Linha - Baterias de Chumbo-Ácido</div>
+            <div class="user_profile" style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--apple_text_secondary);">
+                <i data-lucide="user"></i> Operador PCP
+            </div>
+        </header>
+
+        <!-- MAIN CONTENT AREA -->
+        <main class="content_area">
+            
+            <!-- ALERTA DE CHÃO DE FÁBRICA -->
+            <div class="factory_alert">
+                <div class="pulse_dot"></div>
+                <span><strong>Alerta Crítico:</strong> Temperatura do vaso de fundição de chumbo excedeu os limites operacionais na Linha 02.</span>
+            </div>
+
+            <!-- GRID DE KPIS (OEE / PRODUÇÃO) -->
+            <div class="grid_kpi">
+                <div class="kpi_card">
+                    <div class="kpi_label">Eficiência Global (OEE)</div>
+                    <div class="kpi_value">84.2%</div>
+                </div>
+                <div class="kpi_card">
+                    <div class="kpi_label">Volume Produzido (Hoje)</div>
+                    <div class="kpi_value">1.450 <span style="font-size: 16px; font-weight: 400; color: var(--apple_text_secondary);">unid</span></div>
+                </div>
+                <div class="kpi_card">
+                    <div class="kpi_label">Lotes Rejeitados</div>
+                    <div class="kpi_value" style="color: var(--status_erro);">2</div>
+                </div>
+            </div>
+
+            <!-- FORMULÁRIO DE BIPAGEM / LANÇAMENTO DE OP -->
+            <div class="form_box">
+                <div class="form_grid">
+                    <div class="input_group">
+                        <label class="input_label">Código de Barras do Lote (Bipagem)</label>
+                        <input type="text" class="industrial_input" placeholder="Bipe o código do lote de placas...">
+                    </div>
+                    <div class="input_group">
+                        <label class="input_label">Modelo da Bateria</label>
+                        <input type="text" class="industrial_input" value="Bateria Moto 12V 5Ah - Selada" readonly>
+                    </div>
+                </div>
+                <button class="btn_apple">
+                    <i data-lucide="barcode-scanner" style="width: 16px; height: 16px;"></i> Registrar Entrada
+                </button>
+            </div>
+
+            <!-- TABELA DE SEQUENCIAMENTO DE OP (PCP) -->
+            <div class="table_wrapper">
+                <table class="factory_table">
+                    <thead>
+                        <tr>
+                            <th>Ordem de Produção</th>
+                            <th>Modelo de Bateria</th>
+                            <th>Quantidade</th>
+                            <th>Fase Atual</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>OP-2026-041</strong></td>
+                            <td>Motopeças 12V 7Ah (Grade Injetada)</td>
+                            <td>850</td>
+                            <td>Linha de Montagem / Solda</td>
+                            <td><span class="status_badge sucesso">Em Andamento</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>OP-2026-042</strong></td>
+                            <td>Motopeças 12V 5Ah (Carga Seca)</td>
+                            <td>1.200</td>
+                            <td>Formação e Carga Eletrônica</td>
+                            <td><span class="status_badge info">Planejado</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>OP-2026-043</strong></td>
+                            <td>Motopeças 12V 11Ah (Alta Cilindrada)</td>
+                            <td>400</td>
+                            <td>Acabamento e Selagem</td>
+                            <td><span class="status_badge alerta">Aguardando Setup</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Inicialização dos Ícones Lucide -->
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

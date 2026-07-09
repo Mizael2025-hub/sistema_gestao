@@ -1,0 +1,11 @@
+{# base\partials\header.html #}
+<header class="header">
+    <div class="header_title">
+        {% if page_icon %}<i data-lucide="{{ page_icon }}" class="icon_16"></i>{% endif %}
+        {{ page_title|default:"PCP Komotors" }}
+    </div>
+    <div class="user_profile">
+        <i data-lucide="user"></i>
+        {% if request.user.is_authenticated %}{{ request.user.get_full_name|default:request.user.email }}{% else %}—{% endif %}
+    </div>
+</header>

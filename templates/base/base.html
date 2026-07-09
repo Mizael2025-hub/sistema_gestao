@@ -1,0 +1,30 @@
+{% load static %}
+{# base\base.html — Shell aderente ao design-system.html (sidebar + header + content) #}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ app_name }}{% endblock %}</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <div class="app_shell">
+        {% include 'base/partials/sidebar.html' %}
+
+        <div class="main_container">
+            {% include 'base/partials/header.html' %}
+
+            <main class="content_area">
+                {% include 'base/partials/messages.html' %}
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+
+    {% block extra_body %}{% endblock %}
+    <script>lucide.createIcons();</script>
+</body>
+</html>

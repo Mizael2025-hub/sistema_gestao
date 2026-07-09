@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Design System — Motopeças Core (Painel PCP / Chão de Fábrica)</title>
+    <!-- Lucide Icons (mesma referência da aplicação original) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --apple_bg: #F5F5F7;
+            --apple_surface: #FFFFFF;
+            --apple_text: #1D1D1F;
+            --apple_text_secondary: #86868B;
+            --apple_border: #D2D2D7;
+
+            /* Cores Semânticas Industriais (Sólidas e de Alto Contraste) */
+            --status_sucesso: #34C759;   /* Máquina Operando / OP Concluída */
+            --status_alerta: #FF9500;    /* Setup de Linha / Manutenção Preventiva */
+            --status_erro: #FF3B30;      /* Linha Parada / Falha de Qualidade */
+            --status_info: #0071E3;      /* Planejado pelo PCP */
+
+            --radius_sm: 8px;
+            --radius_md: 12px;
+            --transition_fast: all 0.15s ease-in-out;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* --------------------------------------------------------------------- */
+        /* BODY — no original é o shell (flex / 100vh / overflow hidden).         */
+        /* Neste Design System o body é o contêiner rolável de documentação.     */
+        /* As classes de shell originais (.sidebar, .main_container, ...) são     */
+        /* preservadas 1:1 abaixo. O shell é demoado dentro de .shell_demo.      */
+        /* --------------------------------------------------------------------- */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--apple_bg);
+            color: var(--apple_text);
+            overflow-y: auto;
+        }
+
+        /* -------------------------------------------------------------------------- */
+        /* LAYOUT PRINCIPAL (SHELL OPACO) — preservado 1:1 do original                 */
+        /* -------------------------------------------------------------------------- */
+        .sidebar {
+            width: 260px;
+            background-color: var(--apple_surface);
+            border-right: 1px solid var(--apple_border);
+            display: flex;
+            flex-direction: column;
+            padding: 24px 16px;
+        }
+
+        .sidebar_brand {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 32px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sidebar_menu {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .menu_item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: var(--radius_sm);
+            text-decoration: none;
+            color: var(--apple_text);
+            font-size: 14px;
+            font-weight: 500;
+            transition: var(--transition_fast);
+        }
+
+        .menu_item:hover {
+            background-color: var(--apple_bg);
+        }
+
+        .menu_item.active {
+            background-color: var(--status_info);
+            color: white;
+        }
+
+        .main_container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            height: 60px;
+            background-color: var(--apple_surface);
+            border-bottom: 1px solid var(--apple_border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px;
+        }
+
+        .content_area {
+            flex: 1;
+            padding: 32px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* -------------------------------------------------------------------------- */
+        /* COMPONENTES E GRIDS INDUSTRIAL-DENSE — preservado 1:1 do original          */
+        /* -------------------------------------------------------------------------- */
+        .grid_kpi {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+        }
+
+        .kpi_card {
+            background-color: var(--apple_surface);
+            border: 1px solid var(--apple_border);
+            border-radius: var(--radius_md);
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.01);
+        }
+
+        .kpi_label {
+            font-size: 12px;
+            color: var(--apple_text_secondary);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .kpi_value {
+            font-size: 28px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        /* Alertas de Chão de Fábrica */
+        .factory_alert {
+            background-color: #FFEBEA;
+            border: 1px solid var(--status_erro);
+            border-radius: var(--radius_sm);
+            padding: 14px 16px;
+            color: #D32F2F;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        @keyframes pulse_indicador {
+            0% { transform: scale(0.95); opacity: 0.4; }
+            50% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(0.95); opacity: 0.4; }
+        }
+        .pulse_dot {
+            width: 10px;
+            height: 10px;
+            background-color: var(--status_erro);
+            border-radius: 50%;
+            animation: pulse_indicador 2s infinite ease-in-out;
+        }
+
+        /* Formulários de Bipage e Entrada */
+        .form_box {
+            background-color: var(--apple_surface);
+            border: 1px solid var(--apple_border);
+            border-radius: var(--radius_md);
+            padding: 24px;
+        }
+
+        .form_grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .input_group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .input_label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--apple_text);
+        }
+
+        .industrial_input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--apple_border);
+            border-radius: var(--radius_sm);
+            font-size: 14px;
+            background-color: var(--apple_surface);
+            transition: var(--transition_fast);
+        }
+
+        .industrial_input:focus {
+            border-color: var(--status_info);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15);
+        }
+
+        /* Tabelas Densas do PCP */
+        .table_wrapper {
+            background-color: var(--apple_surface);
+            border: 1px solid var(--apple_border);
+            border-radius: var(--radius_md);
+            overflow: hidden;
+        }
+
+        .factory_table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        .factory_table th {
+            background-color: var(--apple_bg);
+            padding: 12px 16px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--apple_text_secondary);
+            border-bottom: 1px solid var(--apple_border);
+        }
+
+        .factory_table td {
+            padding: 12px 16px;
+            font-size: 14px;
+            border-bottom: 1px solid var(--apple_border);
+        }
+
+        .factory_table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .factory_table tr:hover td {
+            background-color: rgba(0, 0, 0, 0.01);
+        }
+
+        /* Badges de Status Sólidas */
+        .status_badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status_badge.sucesso { background-color: #E6F7ED; color: var(--status_sucesso); }
+        .status_badge.alerta { background-color: #FFF4E5; color: var(--status_alerta); }
+        .status_badge.info { background-color: #E6F1FC; color: var(--status_info); }
+
+        /* Botões Apple-Pill */
+        .btn_apple {
+            background-color: var(--status_info);
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 980px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition_fast);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn_apple:hover {
+            opacity: 0.9;
+        }
+
+        .btn_apple:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* --------------------------------------------------------------------- */
+        /* EXTRAÇÕES FIEIS — valores que no original apareciam como estilo       */
+        /* inline, aqui reorganizados como classes (mesmos valores, sem redraw).  */
+        /* --------------------------------------------------------------------- */
+        .header_title {
+            font-weight: 600;
+            font-size: 16px;
+        }
+        .user_profile {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: var(--apple_text_secondary);
+        }
+        .kpi_unit {
+            font-size: 16px;
+            font-weight: 400;
+            color: var(--apple_text_secondary);
+        }
+        .kpi_value--erro {
+            color: var(--status_erro);
+        }
+        .icon_16 {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* --------------------------------------------------------------------- */
+        /* SCAFFOLD DE DOCUMENTAÇÃO — só estrutura/ laid-out neutro.             */
+        /* Não introduz novas tipografias/cores de marca: reusa tokens originais. */
+        /* --------------------------------------------------------------------- */
+        .ds_nav {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background-color: rgba(255, 255, 255, 0.85);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            border-bottom: 1px solid var(--apple_border);
+            display: flex;
+            gap: 4px;
+            padding: 10px 24px;
+            overflow-x: auto;
+            white-space: nowrap;
+            font-size: 13px;
+        }
+        .ds_nav a {
+            text-decoration: none;
+            color: var(--apple_text);
+            padding: 6px 12px;
+            border-radius: var(--radius_sm);
+            font-weight: 500;
+            transition: var(--transition_fast);
+        }
+        .ds_nav a:hover {
+            background-color: var(--apple_bg);
+        }
+        .ds_nav a.ds_nav_brand {
+            font-weight: 600;
+            color: var(--status_info);
+            margin-right: 8px;
+        }
+
+        .ds_page {
+            display: flex;
+            flex-direction: column;
+            gap: 48px;
+            padding: 32px;
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        .ds_section {
+            background-color: var(--apple_surface);
+            border: 1px solid var(--apple_border);
+            border-radius: var(--radius_md);
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+        .ds_section_head {
+            border-bottom: 1px solid var(--apple_border);
+            padding-bottom: 16px;
+        }
+        .ds_section_head h2 {
+            font-size: 22px;
+            font-weight: 600;
+        }
+        .ds_section_head p {
+            color: var(--apple_text_secondary);
+            font-size: 14px;
+            margin-top: 6px;
+        }
+
+        .ds_sub h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        .ds_sub + .ds_sub {
+            margin-top: 8px;
+        }
+
+        .ds_row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: flex-start;
+        }
+        .ds_col {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .ds_caption {
+            font-size: 12px;
+            color: var(--apple_text_secondary);
+        }
+        .ds_demo {
+            background-color: var(--apple_bg);
+            border: 1px dashed var(--apple_border);
+            border-radius: var(--radius_sm);
+            padding: 16px;
+        }
+
+        /* Tabela de especificações de tipografia */
+        .spec_table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 13px;
+        }
+        .spec_table th,
+        .spec_table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--apple_border);
+            vertical-align: middle;
+        }
+        .spec_table th {
+            background-color: var(--apple_bg);
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--apple_text_secondary);
+            letter-spacing: 0.5px;
+        }
+        .spec_table td.tag {
+            font-weight: 600;
+            color: var(--apple_text);
+        }
+        .spec_table td.spec {
+            text-align: right;
+            color: var(--apple_text_secondary);
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+        }
+
+        /* Swatches */
+        .swatch {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            width: 180px;
+        }
+        .swatch_chip {
+            height: 64px;
+            border-radius: var(--radius_sm);
+            border: 1px solid var(--apple_border);
+        }
+        .swatch_name {
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .swatch_value {
+            font-size: 12px;
+            color: var(--apple_text_secondary);
+            font-variant-numeric: tabular-nums;
+        }
+        .swatch_use {
+            font-size: 12px;
+            color: var(--apple_text_secondary);
+        }
+
+        /* Shell demo — replica o body flex do original localmente */
+        .shell_demo {
+            display: flex;
+            height: 520px;
+            overflow: hidden;
+            border-radius: var(--radius_md);
+            border: 1px solid var(--apple_border);
+        }
+        .shell_demo .content_area {
+            overflow-y: auto;
+        }
+
+        /* Galeria de motion */
+        .motion_card {
+            background-color: var(--apple_surface);
+            border: 1px solid var(--apple_border);
+            border-radius: var(--radius_sm);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-width: 200px;
+        }
+        .motion_name {
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .motion_desc {
+            font-size: 12px;
+            color: var(--apple_text_secondary);
+        }
+
+        /* Swatch chips por token (valores = mesmos tokens originais) */
+        .swatch_chip--bg        { background-color: var(--apple_bg); }
+        .swatch_chip--surface   { background-color: var(--apple_surface); }
+        .swatch_chip--text      { background-color: var(--apple_text); }
+        .swatch_chip--textsec   { background-color: var(--apple_text_secondary); }
+        .swatch_chip--border    { background-color: var(--apple_border); }
+        .swatch_chip--sucesso   { background-color: var(--status_sucesso); }
+        .swatch_chip--alerta    { background-color: var(--status_alerta); }
+        .swatch_chip--erro      { background-color: var(--status_erro); }
+        .swatch_chip--info      { background-color: var(--status_info); }
+
+        /* Previews forçados de estado (sem injetar comportamento JS) */
+        .menu_item.is-hover      { background-color: var(--apple_bg); }
+        .btn_apple.is-hover      { opacity: 0.9; }
+
+        /* Variações de demo scaffolding */
+        .ds_demo--sidebar        { width: 280px; }
+        .ds_demo--sidebar .sidebar { border-right: none; height: auto; }
+        .ds_demo--header .header { border-bottom: none; }
+        .spec_th_preview        {
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--apple_text_secondary);
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .mt4                    { margin-top: 4px; }
+        .states_row             { margin-top: 16px; }
+        .semantics_heading      { margin-top: 20px; }
+
+        /* Galeria de ícones */
+        .icon_grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 12px;
+        }
+        .icon_tile {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: 16px 8px;
+            border: 1px solid var(--apple_border);
+            border-radius: var(--radius_sm);
+            background-color: var(--apple_surface);
+        }
+        .icon_tile:hover {
+            background-color: var(--apple_bg);
+        }
+        .icon_tile span {
+            font-size: 12px;
+            color: var(--apple_text_secondary);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ================================================================= -->
+    <!-- NAVEGAÇÃO FIXA                                                     -->
+    <!-- ================================================================= -->
+    <nav class="ds_nav">
+        <a class="ds_nav_brand" href="#sec-0">Motopeças Core / Design System</a>
+        <a href="#sec-0">0 · Shell</a>
+        <a href="#sec-1">1 · Tipografia</a>
+        <a href="#sec-2">2 · Cores &amp; Superfícies</a>
+        <a href="#sec-3">3 · Navegação</a>
+        <a href="#sec-4">4 · Formulário</a>
+        <a href="#sec-5">5 · Tabelas &amp; Dados</a>
+        <a href="#sec-6">6 · Componentes UI</a>
+        <a href="#sec-7">7 · Layout &amp; Espaçamento</a>
+        <a href="#sec-8">8 · Motion</a>
+        <a href="#sec-9">9 · Ícones</a>
+    </nav>
+
+    <div class="ds_page">
+
+        <!-- ================================================================ -->
+        <!-- SEÇÃO 0 — APPLICATION SHELL (CLONE EXATO)                          -->
+        <!-- ================================================================ -->
+        <section class="ds_section" id="sec-0">
+            <div class="ds_section_head">
+                <h2>0 · Application Shell</h2>
+                <p>Clone exato do layout principal da aplicação: sidebar (260px) + main_container (header 60px + content_area). Mesmas classes, proporções e espaçamentos do <code>index.html</code>. Apenas os textos de conteúdo foram substituídos para apresentar o Design System.</p>
+            </div>
+
+            <div class="shell_demo">
+                <!-- SIDEBAR -->
+                <aside class="sidebar">
+                    <div class="sidebar_brand">
+                        <i data-lucide="factory"></i>
+                        <span>Motopeças Core</span>
+                    </div>
+                    <nav>
+                        <ul class="sidebar_menu">
+                            <li><a href="#" class="menu_item active"><i data-lucide="layout-dashboard"></i> Sequenciamento PCP</a></li>
+                            <li><a href="#" class="menu_item"><i data-lucide="activity"></i> Chão de Fábrica</a></li>
+                            <li><a href="#" class="menu_item"><i data-lucide="battery-charging"></i> Carga e Formação</a></li>
+                            <li><a href="#" class="menu_item"><i data-lucide="shield-alert"></i> Controle de Qualidade</a></li>
+                        </ul>
+                    </nav>
+                </aside>
+
+                <!-- CONTENT WRAPPER -->
+                <div class="main_container">
+                    <!-- HEADER -->
+                    <header class="header">
+                        <div class="header_title">Design System — Painel de Referência</div>
+                        <div class="user_profile">
+                            <i data-lucide="user"></i> Operador PCP
+                        </div>
+                    </header>
+
+                    <!-- MAIN CONTENT AREA -->
+                    <main class="content_area">
+                        <div class="factory_alert">
+                            <div class="pulse_dot"></div>
+                            <span><strong>Documento vivo:</strong> este Design System documenta fielmente o painel PCP / Chão de Fábrica da aplicação de referência.</span>
+                        </div>
+
+                        <div class="grid_kpi">
+                            <div class="kpi_card">
+                                <div class="kpi_label">Componentes Documentados</div>
+                                <div class="kpi_value">9</div>
+                            </div>
+                            <div class="kpi_card">
+                                <div class="kpi_label">Seções</div>
+                                <div class="kpi_value">10 <span class="kpi_unit">itens</span></div>
+                            </div>
+                            <div class="kpi_card">
+                                <div class="kpi_label">Estados Omitidos</div>
+                                <div class="kpi_value kpi_value--erro">0</div>
+                            </div>
+                        </div>
+
+                        <div class="form_box">
+                            <div class="form_grid">
+                                <div class="input_group">
+                                    <label class="input_label">Buscar componente</label>
+                                    <input type="text" class="industrial_input" placeholder="Digite o nome do componente...">
+                                </div>
+                                <div class="input_group">
+                                    <label class="input_label">Aplicação de referência</label>
+                                    <input type="text" class="industrial_input" value="Painel PCP — Motopeças Core" readonly>
+                                </div>
+                            </div>
+                            <button class="btn_apple">
+                                <i data-lucide="search" class="icon_16"></i> Buscar no Design System
+                            </button>
+                        </div>
+
+                        <div class="table_wrapper">
+                            <table class="factory_table">
+                                <thead>
+                                    <tr>
+                                        <th>Seção</th>
+                                        <th>Conteúdo</th>
+                                        <th>Componentes</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>SEC-0</strong></td>
+                                        <td>Application Shell</td>
+                                        <td>Sidebar / Header / Content</td>
+                                        <td><span class="status_badge sucesso">Documentado</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>SEC-4</strong></td>
+                                        <td>Componentes de Formulário</td>
+                                        <td>Input / Label / Button</td>
+                                        <td><span class="status_badge info">Planejado</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>SEC-8</strong></td>
+                                        <td>Motion e Interação</td>
+                                        <td>Pulse / Hover / Focus</td>
+                                        <td><span class="status_badge alerta">Aguardando Revisão</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </main>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================================================================ -->
+        <!-- SEÇÃO 1 — TIPOGRAFIA                                               -->
+        <!-- ================================================================ -->
+        <section class="ds_section" id="sec-1">
+            <div class="ds_section_head">
+                <h2>1 · Tipografia</h2>
+                <p>Fonte do sistema (<code>-apple-system</code>). Apenas os estilos presentes na aplicação de referência, hierarquizados. Line-height não é definido no original (herda <em>normal</em>).</p>
+            </div>
+
+            <table class="spec_table">
+                <thead>
+                    <tr>
+                        <th>Estilo</th>
+                        <th>Classe</th>
+                        <th>Preview ao vivo</th>
+                        <th>Tamanho / Line</th>
+                        <th>Peso</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="tag">Brand (Sidebar)</td>
+                        <td><code>.sidebar_brand</code></td>
+                        <td><span class="sidebar_brand">Motopeças Core</span></td>
+                        <td class="spec">18px / normal</td>
+                        <td class="spec">600</td>
+                    </tr>
+                    <tr>
+                        <td class="tag">Page Title (Header)</td>
+                        <td><code>.header_title</code></td>
+                        <td><span class="header_title">Monitoramento de Linha</span></td>
+                        <td class="spec">16px / normal</td>
+                        <td class="spec">600</td>
+                    </tr>
+                    <tr>
+                        <td class="tag">KPI Value</td>
+                        <td><code>.kpi_value</code></td>
+                        <td><span class="kpi_value">84.2%</span></td>
+                        <td class="spec">28px / normal</td>
+                        <td class="spec">600</td>
+                    </tr>
+                    <tr>
+                        <td class="tag">Section Heading (item menu)</td>
+                        <td><code>.menu_item</code></td>
+                        <td><span class="menu_item">Sequenciamento PCP</span></td>
+                        <td class="spec">14px / normal</td>
+                        <td class="spec">500</td>
+                    </tr>
+                    <tr>
+                        <td class="tag">Body Text</td>
+                        <td><code>.industrial_input</code>, <code>.btn_apple</code>, <code>.user_profile</code></td>
+                        <td>Texto corrido padrão do sistema</td>
+                        <td class="spec">14px / normal</td>
+                        <td class="spec">400–500</td>
+                    </tr>
+                    <tr>
+                        <td class="tag">Subtitle / Label (campo)</td>
+                        <td><code>.input_label</code></td>
+                        <td><span class="input_label">Código de Barras do Lote</span></td>
+                        <td class="spec">13px / normal</td>
+                        <td class="spec">500</td>
+                    </tr>
+                    <tr>
+                        <td class="tag">Table Header</td>
+                        <td><code>.factory_table th</code></td>
+                        <td><span class="spec_th_preview">ORDEM DE PRODUÇÃO</span></td>
+                        <td class="spec">12px / normal</td>
+                        <td class="spec">600 · UPPERCASE</td>
+                    </tr>
+                    <tr>
+                        <td class="tag">Caption / Label (KPI)</td>
+                        <td><code>.kpi_label</code></td>
+                        <td><span class="kpi_label">Eficiência Global (OEE)</span></td>
+                        <td class="spec">12px / normal</td>
+                        <td class="spec">500 · UPPERCASE</td>
+                    </tr>
+                    <tr>
+                        <td class="tag">Status / Badge</td>
+                        <td><code>.status_badge</code></td>
+                        <td><span class="status_badge sucesso">EM ANDAMENTO</span></td>
+                        <td class="spec">12px / normal</td>
+                        <td class="spec">600</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p class="ds_caption">Nota: a aplicação não define <code>line-height</code> em nenhuma regra — todos herdam <em>normal</em> do browser. Não há fonte monospace em uso.</p>
+        </section>
+
+        <!-- ================================================================ -->
+        <!-- SEÇÃO 2 — CORES, SUPERFÍCIES E ESTADOS SEMÂNTICOS                  -->
+        <!-- ================================================================ -->
+        <section class="ds_section" id="sec-2">
+            <div class="ds_section_head">
+                <h2>2 · Cores, Superfícies e Estados Semânticos</h2>
+                <p>Tokens definidos em <code>:root</code>. A aplicação utiliza apenas tema claro (não há tema escuro no original).</p>
+            </div>
+
+            <!-- 2.1 Cores de Interface -->
+            <div class="ds_sub">
+                <h3>2.1 — Cores de Interface</h3>
+                <div class="ds_row">
+                    <div class="swatch">
+                        <div class="swatch_chip swatch_chip--bg"></div>
+                        <div class="swatch_name">--apple_bg</div>
+                        <div class="swatch_value">#F5F5F7</div>
+                        <div class="swatch_use">Background principal · linhas de tabela · hover de menu</div>
+                    </div>
+                    <div class="swatch">
+                        <div class="swatch_chip swatch_chip--surface"></div>
+                        <div class="swatch_name">--apple_surface</div>
+                        <div class="swatch_value">#FFFFFF</div>
+                        <div class="swatch_use">Sidebar · header · cards · tabelas · inputs · botões</div>
+                    </div>
+                    <div class="swatch">
+                        <div class="swatch_chip swatch_chip--text"></div>
+                        <div class="swatch_name">--apple_text</div>
+                        <div class="swatch_value">#1D1D1F</div>
+                        <div class="swatch_use">Texto principal</div>
+                    </div>
+                    <div class="swatch">
+                        <div class="swatch_chip swatch_chip--textsec"></div>
+                        <div class="swatch_name">--apple_text_secondary</div>
+                        <div class="swatch_value">#86868B</div>
+                        <div class="swatch_use">Texto secundário, captions, header de tabela</div>
+                    </div>
+                    <div class="swatch">
+                        <div class="swatch_chip swatch_chip--border"></div>
+                        <div class="swatch_name">--apple_border</div>
+                        <div class="swatch_value">#D2D2D7</div>
+                        <div class="swatch_use">Divisores e bordas de todos os componentes</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2.2 Cores Semânticas -->
+            <div class="ds_sub">
+                <h3>2.2 — Cores Semânticas de Estado</h3>
+                <div class="ds_row">
+                    <div class="swatch">
+                        <div class="swatch_chip swatch_chip--sucesso"></div>
+                        <div class="swatch_name">--status_sucesso</div>
+                        <div class="swatch_value">#34C759</div>
+                        <div class="swatch_use">Máquina operando / OP concluída</div>
+                    </div>
+                    <div class="swatch">
+                        <div class="swatch_chip swatch_chip--alerta"></div>
+                        <div class="swatch_name">--status_alerta</div>
+                        <div class="swatch_value">#FF9500</div>
+                        <div class="swatch_use">Setup de linha / manutenção preventiva</div>
+                    </div>
+                    <div class="swatch">
+                        <div class="swatch_chip swatch_chip--erro"></div>
+                        <div class="swatch_name">--status_erro</div>
+                        <div class="swatch_value">#FF3B30</div>
+                        <div class="swatch_use">Linha parada / falha de qualidade (alerta crítico)</div>
+                    </div>
+                    <div class="swatch">
+                        <div class="swatch_chip swatch_chip--info"></div>
+                        <div class="swatch_name">--status_info</div>
+                        <div class="swatch_value">#0071E3</div>
+                        <div class="swatch_use">Planejado pelo PCP / item ativo / botão / focus</div>
+                    </div>
+                </div>
+
+                <h3 class="semantics_heading">Aplicação das cores semânticas</h3>
+                <div class="ds_row">
+                    <div class="ds_col">
+                        <span class="ds_caption">Badge de status — .status_badge</span>
+                        <span class="status_badge sucesso">Em Andamento</span>
+                        <span class="status_badge alerta">Aguardando Setup</span>
+                        <span class="status_badge info">Planejado</span>
+                    </div>
+                    <div class="ds_col">
+                        <span class="ds_caption">Mensagem inline de erro — .factory_alert</span>
+                        <div class="factory_alert">
+                            <div class="pulse_dot"></div>
+                            <span><strong>Alerta Crítico:</strong> temperatura excedeu limites na Linha 02.</span>
+                        </div>
+                    </div>
+                    <div class="ds_col">
+                        <span class="ds_caption">Highlight de campo (focus) — .industrial_input:focus</span>
+                        <input type="text" class="industrial_input" value="Bipe o código..." autofocus>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2.3 Superfícies e efeitos -->
+            <div class="ds_sub">
+                <h3>2.3 — Superfícies e Efeitos</h3>
+                <table class="spec_table">
+                    <thead>
+                        <tr>
+                            <th>Efeito</th>
+                            <th>Onde</th>
+                            <th>Valor exato</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="tag">Borda / divisor</td>
+                            <td>Todos os componentes</td>
+                            <td class="spec">1px solid var(--apple_border)</td>
+                        </tr>
+                        <tr>
+                            <td class="tag">Sombra de card</td>
+                            <td>.kpi_card</td>
+                            <td class="spec">0 2px 4px rgba(0,0,0,0.01)</td>
+                        </tr>
+                        <tr>
+                            <td class="tag">Sombra de focus</td>
+                            <td>.industrial_input:focus</td>
+                            <td class="spec">0 0 0 3px rgba(0,113,227,0.15)</td>
+                        </tr>
+                        <tr>
+                            <td class="tag">Hover sutil de linha</td>
+                            <td>.factory_table tr:hover td</td>
+                            <td class="spec">background rgba(0,0,0,0.01)</td>
+                        </tr>
+                        <tr>
+                            <td class="tag">Glass / blur</td>
+                            <td>.ds_nav (apenas navegação do DS)</td>
+                            <td class="spec">não existe na aplicação original</td>
+                        </tr>
+                        <tr>
+                            <td class="tag">Backdrop / overlay</td>
+                            <td>—</td>
+                            <td class="spec">não existe no original (sem modais)</td>
+                        </tr>
+                        <tr>
+                            <td class="tag">Gradientes</td>
+                            <td>—</td>
+                            <td class="spec">não existem no original</td>
+                        </tr>
+                        <tr>
+                            <td class="tag">Radius</td>
+                            <td>--radius_sm / --radius_md / botão</td>
+                            <td class="spec">8px / 12px / 980px (pill)</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p class="ds_caption">Demais componentes (.form_box, .table_wrapper, .factory_alert) usam apenas cor sólida + borda, sem sombra.</p>
+            </div>
+        </section>
+
+        <!-- ================================================================ -->
+        <!-- SEÇÃO 3 — NAVEGAÇÃO E ESTRUTURA                                    -->
+        <!-- ================================================================ -->
+        <section class="ds_section" id="sec-3">
+            <div class="ds_section_head">
+                <h2>3 · Navegação e Estrutura</h2>
+                <p>A aplicação possui apenas sidebar e header. Não há breadcrumbs, tabs nem paginação no original — omitidos.</p>
+            </div>
+
+            <!-- 3.1 Sidebar -->
+            <div class="ds_sub">
+                <h3>3.1 — Menu / Sidebar</h3>
+                <p class="ds_caption">Sidebar fixa de 260px, sem estado collapsed no original.</p>
+                <div class="ds_demo ds_demo--sidebar">
+                    <div class="sidebar">
+                        <div class="sidebar_brand">
+                            <i data-lucide="factory"></i>
+                            <span>Motopeças Core</span>
+                        </div>
+                        <nav>
+                            <ul class="sidebar_menu">
+                                <li><a href="#" class="menu_item active"><i data-lucide="layout-dashboard"></i> Sequenciamento PCP</a></li>
+                                <li><a href="#" class="menu_item"><i data-lucide="activity"></i> Chão de Fábrica</a></li>
+                                <li><a href="#" class="menu_item"><i data-lucide="battery-charging"></i> Carga e Formação</a></li>
+                                <li><a href="#" class="menu_item"><i data-lucide="shield-alert"></i> Controle de Qualidade</a></li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+                <div class="ds_row states_row">
+                    <div class="ds_col">
+                        <span class="ds_caption">Default (passe o mouse)</span>
+                        <a href="#" class="menu_item"><i data-lucide="activity"></i> Chão de Fábrica</a>
+                    </div>
+                    <div class="ds_col">
+                        <span class="ds_caption">Hover (is-hover)</span>
+                        <a href="#" class="menu_item is-hover"><i data-lucide="activity"></i> Chão de Fábrica</a>
+                    </div>
+                    <div class="ds_col">
+                        <span class="ds_caption">Active (página atual)</span>
+                        <a href="#" class="menu_item active"><i data-lucide="activity"></i> Chão de Fábrica</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3.2 Header -->
+            <div class="ds_sub">
+                <h3>3.2 — Header / Topbar</h3>
+                <div class="ds_demo ds_demo--header">
+                    <header class="header">
+                        <div class="header_title">Monitoramento de Linha — Design System</div>
+                        <div class="user_profile">
+                            <i data-lucide="user"></i> Operador PCP
+                        </div>
+                    </header>
+                </div>
+                <p class="ds_caption">Elementos: título à esquerda (.header_title, 16px/600) + perfil de usuário à direita (.user_profile, ícone + texto em texto secundário). Não há busca, notificações nem avatar no original.</p>
+            </div>
+        </section>
+
+        <!-- ================================================================ -->
+        <!-- SEÇÃO 4 — COMPONENTES DE FORMULÁRIO                               -->
+        <!-- ================================================================ -->
+        <section class="ds_section" id="sec-4">
+            <div class="ds_section_head">
+                <h2>4 · Componentes de Formulário</h2>
+                <p>A aplicação possui apenas <strong>input de texto</strong> e <strong>botão</strong> (botão documentado na Seção 6). Não há select, checkbox, radio, toggle, textarea, date picker nem file upload no original — omitidos.</p>
+            </div>
+
+            <!-- 4.1 Inputs -->
+            <div class="ds_sub">
+                <h3>4.1 — Inputs de Texto (.industrial_input)</h3>
+                <div class="ds_row">
+                    <div class="input_group">
+                        <label class="input_label">Default</label>
+                        <input type="text" class="industrial_input" placeholder="Placeholder...">
+                    </div>
+                    <div class="input_group">
+                        <label class="input_label">Focus</label>
+                        <input type="text" class="industrial_input" value="Conteúdo em foco" autofocus>
+                    </div>
+                    <div class="input_group">
+                        <label class="input_label">Filled</label>
+                        <input type="text" class="industrial_input" value="Bateria Moto 12V 5Ah - Selada">
+                    </div>
+                    <div class="input_group">
+                        <label class="input_label">Read-only (do original)</label>
+                        <input type="text" class="industrial_input" value="Bateria Moto 12V 5Ah - Selada" readonly>
+                    </div>
+                </div>
+                <p class="ds_caption">Estados Focus / Error via / :focus. O original não define estados <em>error</em>, <em>disabled</em> nem <em>tamanho sm/md/lg</em> para o input. Read-only aparece no formulário de bipage.</p>
+            </div>
+
+            <!-- 4.2 Label -->
+            <div class="ds_sub">
+                <h3>Label (.input_label)</h3>
+                <label class="input_label">Código de Barras do Lote (Bipagem)</label>
+                <p class="ds_caption">Label sempre acima do campo (input_group = flex column, gap 6px). Sem helper text nem mensagem de erro no original.</p>
+            </div>
+
+            <!-- 4.3 Composição -->
+            <div class="ds_sub">
+                <h3>4.2 — Composição de Formulário (extraído do original: Bipage / Lançamento de OP)</h3>
+                <div class="form_box">
+                    <div class="form_grid">
+                        <div class="input_group">
+                            <label class="input_label">Código de Barras do Lote (Bipagem)</label>
+                            <input type="text" class="industrial_input" placeholder="Bipe o código do lote de placas...">
+                        </div>
+                        <div class="input_group">
+                            <label class="input_label">Modelo da Bateria</label>
+                            <input type="text" class="industrial_input" value="Bateria Moto 12V 5Ah - Selada" readonly>
+                        </div>
+                    </div>
+                    <button class="btn_apple">
+                        <i data-lucide="barcode-scanner" class="icon_16"></i> Registrar Entrada
+                    </button>
+                </div>
+                <p class="ds_caption">Padrão: .form_box (padding 24px) → .form_grid (auto-fit minmax 200px, gap 16px) → .input_group (coluna) → botão de ação alinhado à esquerda abaixo do grid.</p>
+            </div>
+        </section>
+
+        <!-- ================================================================ -->
+        <!-- SEÇÃO 5 — TABELAS E EXIBIÇÃO DE DADOS                             -->
+        <!-- ================================================================ -->
+        <section class="ds_section" id="sec-5">
+            <div class="ds_section_head">
+                <h2>5 · Tabelas e Exibição de Dados</h2>
+                <p>A aplicação usa tabela densa + cards de KPI. Não há empty state, cards de dados genéricos nem gráficos no original.</p>
+            </div>
+
+            <!-- 5.1 Tabela -->
+            <div class="ds_sub">
+                <h3>5.1 — Tabela de Dados (.factory_table)</h3>
+                <div class="table_wrapper">
+                    <table class="factory_table">
+                        <thead>
+                            <tr>
+                                <th>Ordem de Produção</th>
+                                <th>Modelo de Bateria</th>
+                                <th>Quantidade</th>
+                                <th>Fase Atual</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>OP-2026-041</strong></td>
+                                <td>Motopeças 12V 7Ah (Grade Injetada)</td>
+                                <td>850</td>
+                                <td>Linha de Montagem / Solda</td>
+                                <td><span class="status_badge sucesso">Em Andamento</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>OP-2026-042</strong></td>
+                                <td>Motopeças 12V 5Ah (Carga Seca)</td>
+                                <td>1.200</td>
+                                <td>Formação e Carga Eletrônica</td>
+                                <td><span class="status_badge info">Planejado</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>OP-2026-043</strong></td>
+                                <td>Motopeças 12V 11Ah (Alta Cilindrada)</td>
+                                <td>400</td>
+                                <td>Acabamento e Selagem</td>
+                                <td><span class="status_badge alerta">Aguardando Setup</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="ds_caption">Header com fundo --apple_bg, UPPERCASE, texto secundário. Sem ordenação visual. Linha hover = rgba(0,0,0,0.01). Sem zebra striping, sem linha selecionada, sem empty state. Célula com badge e célula com valor forte (<strong>) são os únicos tratamentos.</p>
+            </div>
+
+            <!-- 5.3 KPI -->
+            <div class="ds_sub">
+                <h3>5.3 — Métricas / KPIs (.kpi_card)</h3>
+                <div class="grid_kpi">
+                    <div class="kpi_card">
+                        <div class="kpi_label">Eficiência Global (OEE)</div>
+                        <div class="kpi_value">84.2%</div>
+                    </div>
+                    <div class="kpi_card">
+                        <div class="kpi_label">Volume Produzido (Hoje)</div>
+                        <div class="kpi_value">1.450 <span class="kpi_unit">unid</span></div>
+                    </div>
+                    <div class="kpi_card">
+                        <div class="kpi_label">Lotes Rejeitados</div>
+                        <div class="kpi_value kpi_value--erro">2</div>
+                    </div>
+                </div>
+                <p class="ds_caption">Card com label UPPERCASE secundário + valor 28px/600. Variação de erro via cor --status_erro. Unidade secundária em .kpi_unit (16px/400). Sem indicador de trend/variação no original.</p>
+            </div>
+        </section>
+
+        <!-- ================================================================ -->
+        <!-- SEÇÃO 6 — COMPONENTES DE UI                                       -->
+        <!-- ================================================================ -->
+        <section class="ds_section" id="sec-6">
+            <div class="ds_section_head">
+                <h2>6 · Componentes de UI</h2>
+                <p>Apenas botão e badge existem no original. Não há modais, toasts, tooltips, dropdown, avatar isolado, loading nem skeleton — omitidos.</p>
+            </div>
+
+            <!-- 6.1 Botões -->
+            <div class="ds_sub">
+                <h3>6.1 — Botões (.btn_apple)</h3>
+                <p class="ds_caption">Variante única: primary pill (--status_info). Hover = opacity 0.9.</p>
+                <div class="ds_row">
+                    <div class="ds_col">
+                        <span class="ds_caption">Default</span>
+                        <button class="btn_apple">Registrar Entrada</button>
+                    </div>
+                    <div class="ds_col">
+                        <span class="ds_caption">Hover (opacity 0.9)</span>
+                        <button class="btn_apple is-hover">Registrar Entrada</button>
+                    </div>
+                    <div class="ds_col">
+                        <span class="ds_caption">Com ícone (do original)</span>
+                        <button class="btn_apple"><i data-lucide="barcode-scanner" class="icon_16"></i> Registrar Entrada</button>
+                    </div>
+                    <div class="ds_col">
+                        <span class="ds_caption">Disabled (estado documentado)</span>
+                        <button class="btn_apple" disabled>Registrar Entrada</button>
+                    </div>
+                </div>
+                <p class="ds_caption">Sem variantes secondary/outline/ghost/danger nem tamanhos sm/md/lg no original. Padding 10px 24px, radius 980px (pill), gap 8px.</p>
+            </div>
+
+            <!-- 6.2 Badges -->
+            <div class="ds_sub">
+                <h3>6.2 — Badges / Status Pills (.status_badge)</h3>
+                <div class="ds_row">
+                    <div class="ds_col">
+                        <span class="ds_caption">.sucesso</span>
+                        <span class="status_badge sucesso">Em Andamento</span>
+                    </div>
+                    <div class="ds_col">
+                        <span class="ds_caption">.alerta</span>
+                        <span class="status_badge alerta">Aguardando Setup</span>
+                    </div>
+                    <div class="ds_col">
+                        <span class="ds_caption">.info</span>
+                        <span class="status_badge info">Planejado</span>
+                    </div>
+                </div>
+                <p class="ds_caption">Não existe variante .erro de badge nem badge com ícone no original. Padding 4px 8px, radius 4px, 12px/600. Fundo tint claro + cor de estado sólida.</p>
+            </div>
+        </section>
+
+        <!-- ================================================================ -->
+        <!-- SEÇÃO 7 — LAYOUT E ESPAÇAMENTO                                    -->
+        <!-- ================================================================ -->
+        <section class="ds_section" id="sec-7">
+            <div class="ds_section_head">
+                <h2>7 · Layout e Espaçamento</h2>
+                <p>Shell flex com sidebar fixa de 260px + conteúdo. Body height 100vh, overflow hidden — a rolagem vive no .content_area.</p>
+            </div>
+
+            <table class="spec_table">
+                <thead>
+                    <tr>
+                        <th>Token / área</th>
+                        <th>Valor</th>
+                        <th>Onde</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td class="tag">Sidebar (largura)</td><td class="spec">260px</td><td>.sidebar</td></tr>
+                    <tr><td class="tag">Sidebar padding</td><td class="spec">24px 16px</td><td>.sidebar</td></tr>
+                    <tr><td class="tag">Header (altura)</td><td class="spec">60px</td><td>.header</td></tr>
+                    <tr><td class="tag">Header padding</td><td class="spec">0 32px</td><td>.header</td></tr>
+                    <tr><td class="tag">Content padding</td><td class="spec">32px</td><td>.content_area</td></tr>
+                    <tr><td class="tag">Gap entre seções</td><td class="spec">24px</td><td>.content_area (flex column)</td></tr>
+                    <tr><td class="tag">Grid KPI</td><td class="spec">auto-fit / minmax(240px,1fr) / gap 20px</td><td>.grid_kpi</td></tr>
+                    <tr><td class="tag">Card padding</td><td class="spec">20px</td><td>.kpi_card</td></tr>
+                    <tr><td class="tag">Grid de formulário</td><td class="spec">auto-fit / minmax(200px,1fr) / gap 16px</td><td>.form_grid</td></tr>
+                    <tr><td class="tag">Form box padding</td><td class="spec">24px</td><td>.form_box</td></tr>
+                    <tr><td class="tag">Input group gap</td><td class="spec">6px</td><td>.input_group</td></tr>
+                    <tr><td class="tag">Célula de tabela</td><td class="spec">12px 16px</td><td>.factory_table th/td</td></tr>
+                </tbody>
+            </table>
+
+            <div class="ds_sub">
+                <h3>Padrões de layout extraídos</h3>
+                <p class="ds_caption"><strong>1) Listagem:</strong> content_area → factory_alert (opcional) → grid_kpi → table_wrapper. <strong>2) Formulário:</strong> content_area → form_box → form_grid (2 colunas) → btn_apple à esquerda. <strong>3) Dashboard:</strong> content_area → grid_kpi de KPIs. A aplicação original usa apenas tema claro e não declara breakpoints — responsividade vem do <em>auto-fit</em> dos grids (KPI em 240px, formulário em 200px).</p>
+            </div>
+        </section>
+
+        <!-- ================================================================ -->
+        <!-- SEÇÃO 8 — MOTION E INTERAÇÃO                                      -->
+        <!-- ================================================================ -->
+        <section class="ds_section" id="sec-8">
+            <div class="ds_section_head">
+                <h2>8 · Motion e Interação</h2>
+                <p>Token de transição: <code>--transition_fast: all 0.15s ease-in-out</code>. Animação contínua única: <code>pulse_indicador</code>.</p>
+            </div>
+
+            <div class="ds_row">
+                <div class="motion_card">
+                    <div class="motion_name">Pulse Indicador (alerta crítico)</div>
+                    <div class="ds_caption"><code>@keyframes pulse_indicador</code> · 2s infinite ease-in-out</div>
+                    <div class="factory_alert mt4">
+                        <div class="pulse_dot"></div>
+                        <span>Alerta de chão de fábrica</span>
+                    </div>
+                    <div class="motion_desc">scale 0.95→1.1 + opacity 0.4→1. Aplicado ao .pulse_dot vermelho.</div>
+                </div>
+
+                <div class="motion_card">
+                    <div class="motion_name">Hover de menu (.menu_item)</div>
+                    <div class="ds_caption">transition var(--transition_fast) → background-color</div>
+                    <a href="#" class="menu_item"><i data-lucide="activity"></i> Chão de Fábrica</a>
+                    <div class="motion_desc">all 0.15s ease-in-out. Passe o mouse.</div>
+                </div>
+
+                <div class="motion_card">
+                    <div class="motion_name">Focus de input</div>
+                    <div class="ds_caption">transition var(--transition_fast) → border + box-shadow</div>
+                    <input type="text" class="industrial_input" value="Clique para focar">
+                    <div class="motion_desc">all 0.15s ease-in-out + ring rgba(0,113,227,0.15).</div>
+                </div>
+
+                <div class="motion_card">
+                    <div class="motion_name">Hover de botão (.btn_apple)</div>
+                    <div class="ds_caption">transition var(--transition_fast) → opacity</div>
+                    <button class="btn_apple">Registrar Entrada</button>
+                    <div class="motion_desc">all 0.15s ease-in-out → opacity 0.9.</div>
+                </div>
+
+                <div class="motion_card">
+                    <div class="motion_name">Hover de linha de tabela</div>
+                    <div class="ds_caption">.factory_table tr:hover td → fundo</div>
+                    <div class="table_wrapper mt4">
+                        <table class="factory_table">
+                            <tbody>
+                                <tr><td>Passe o mouse</td><td><span class="status_badge info">Planejado</span></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================================================================ -->
+        <!-- SEÇÃO 9 — ÍCONES                                                  -->
+        <!-- ================================================================ -->
+        <section class="ds_section" id="sec-9">
+            <div class="ds_section_head">
+                <h2>9 · Ícones</h2>
+                <p>Biblioteca: <strong>Lucide</strong> via <code>https://unpkg.com/lucide@latest</code> (mesma referência do original), inicializados com <code>lucide.createIcons()</code>. Marcação: <code>&lt;i data-lucide="..."&gt;&lt;/i&gt;</code>. Herdam <em>currentColor</em>.</p>
+            </div>
+
+            <div class="ds_sub">
+                <h3>Navegação</h3>
+                <div class="icon_grid">
+                    <div class="icon_tile"><i data-lucide="factory"></i><span>factory</span></div>
+                    <div class="icon_tile"><i data-lucide="layout-dashboard"></i><span>layout-dashboard</span></div>
+                    <div class="icon_tile"><i data-lucide="activity"></i><span>activity</span></div>
+                    <div class="icon_tile"><i data-lucide="battery-charging"></i><span>battery-charging</span></div>
+                    <div class="icon_tile"><i data-lucide="shield-alert"></i><span>shield-alert</span></div>
+                    <div class="icon_tile"><i data-lucide="user"></i><span>user</span></div>
+                </div>
+            </div>
+
+            <div class="ds_sub">
+                <h3>Ações</h3>
+                <div class="icon_grid">
+                    <div class="icon_tile"><i data-lucide="barcode-scanner" class="icon_16"></i><span>barcode-scanner (16px)</span></div>
+                    <div class="icon_tile"><i data-lucide="search" class="icon_16"></i><span>search (16px)</span></div>
+                </div>
+                <p class="ds_caption">Tamanho padrão do Lucide: 24px (herdado). Ícones de ação usam classe <code>.icon_16</code> (16px) extraída do estilo inline original do botão de bipage. Cor herdada via <em>currentColor</em> (text no menu, white no item ativo, branco no botão).</p>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Mesma inicialização do original -->
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

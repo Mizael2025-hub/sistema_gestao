@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Protótipo — Controle de Chumbo (PCP Komotors)</title>
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+:root{
+  --apple_bg:#F5F5F7;
+  --apple_surface:#FFFFFF;
+  --apple_text:#1D1D1F;
+  --apple_text_secondary:#86868B;
+  --apple_border:#D2D2D7;
+  --status_sucesso:#34C759;
+  --status_alerta:#FF9500;
+  --status_erro:#FF3B30;
+  --status_info:#0071E3;
+  --radius_sm:8px;
+  --radius_md:12px;
+  --transition_fast:all 0.15s ease-in-out;
+
+  /* Cores das ligas (do glossário do PRD) */
+  --liga0:#1D1D1F; /* chumbo puro, preto/sem cor */
+  --liga4:#34C759; /* Pb+estanho, verde */
+  --liga5:#FF3B30; /* negativa, vermelho */
+  --liga6:#FFCC00; /* positiva, amarelo */
+}
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background:var(--apple_bg);
+  color:var(--apple_text);
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ====== Seletor de viewport (utilitário de protótipo) ====== */
+.viewport_bar{
+  position:fixed;top:0;left:0;right:0;z-index:200;
+  background:rgba(255,255,255,0.9);
+  backdrop-filter:saturate(180%) blur(20px);
+  -webkit-backdrop-filter:saturate(180%) blur(20px);
+  border-bottom:1px solid var(--apple_border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 12px;gap:8px;
+  font-size:13px;
+}
+.viewport_bar .brand{display:flex;align-items:center;gap:6px;font-weight:600;color:var(--status_info);}
+.viewport_bar .vp_buttons{display:flex;gap:4px;}
+.viewport_bar .vp_buttons button{
+  border:1px solid var(--apple_border);background:var(--apple_surface);
+  color:var(--apple_text_secondary);font-size:12px;font-weight:500;
+  padding:6px 10px;border-radius:var(--radius_sm);cursor:pointer;transition:var(--transition_fast);
+}
+.viewport_bar .vp_buttons button.active{background:var(--status_info);color:#fff;border-color:var(--status_info);}
+
+/* ====== Frame que simula o dispositivo ====== */
+#device_frame{
+  margin:50px auto 0;
+  background:var(--apple_bg);
+  box-shadow:0 0 0 1px var(--apple_border), 0 8px 30px rgba(0,0,0,0.08);
+  border-radius:0;
+  height:calc(100vh - 50px);
+  display:flex;flex-direction:column;
+  overflow:hidden;
+  position:relative;
+}
+#device_frame.is_mobile{border-radius:24px;height:760px;width:390px;margin-top:50px;margin-bottom:20px;}
+#device_frame.is_tablet{border-radius:18px;height:900px;width:768px;margin-top:50px;}
+#device_frame.is_desktop{height:calc(100vh - 50px);width:100%;}
+
+/* ====== App shell mobile ====== */
+.app{display:flex;flex-direction:column;height:100%;}
+
+.topbar{
+  height:54px;background:var(--apple_surface);
+  border-bottom:1px solid var(--apple_border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;flex-shrink:0;
+}
+.topbar .title{font-size:16px;font-weight:600;display:flex;align-items:center;gap:8px;}
+.topbar .topright{display:flex;align-items:center;gap:10px;color:var(--apple_text_secondary);font-size:13px;}
+.back_btn{
+  border:none;background:transparent;cursor:pointer;color:var(--status_info);
+  display:flex;align-items:center;gap:4px;font-size:14px;font-weight:500;padding:6px 8px;border-radius:var(--radius_sm);
+}
+.back_btn:hover{background:var(--apple_bg);}
+
+.content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px;display:flex;flex-direction:column;gap:16px;}
+.content::-webkit-scrollbar{width:6px;}
+.content::-webkit-scrollbar-thumb{background:var(--apple_border);border-radius:3px;}
+
+.bottom_nav{
+  height:62px;background:var(--apple_surface);
+  border-top:1px solid var(--apple_border);
+  display:flex;flex-shrink:0;
+}
+.bottom_nav button{
+  flex:1;border:none;background:transparent;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  color:var(--apple_text_secondary);font-size:10px;font-weight:500;transition:var(--transition_fast);
+  padding:6px 2px;
+}
+.bottom_nav button.active{color:var(--status_info);}
+.bottom_nav button i{width:22px;height:22px;}
+.bottom_nav button.active i{stroke:var(--status_info);}
+
+/* ====== Componentes reusados do design system ====== */
+.kpi_card{background:var(--apple_surface);border:1px solid var(--apple_border);border-radius:var(--radius_md);padding:14px;box-shadow:0 2px 4px rgba(0,0,0,0.01);}
+.kpi_label{font-size:11px;color:var(--apple_text_secondary);font-weight:500;text-transform:uppercase;letter-spacing:0.5px;}
+.kpi_value{font-size:22px;font-weight:600;margin-top:4px;}
+.kpi_value--erro{color:var(--status_erro);}
+.kpi_value--info{color:var(--status_info);}
+.kpi_value--alerta{color:var(--status_alerta);}
+.kpi_unit{font-size:13px;font-weight:400;color:var(--apple_text_secondary);}
+
+.grid_kpi{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.grid_kpi .full{grid-column:1 / -1;}
+
+.form_box{background:var(--apple_surface);border:1px solid var(--apple_border);border-radius:var(--radius_md);padding:16px;display:flex;flex-direction:column;gap:14px;}
+.form_grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.form_grid .full{grid-column:1 / -1;}
+.input_group{display:flex;flex-direction:column;gap:6px;}
+.input_label{font-size:13px;font-weight:500;color:var(--apple_text);}
+.industrial_input{
+  width:100%;padding:10px 12px;border:1px solid var(--apple_border);
+  border-radius:var(--radius_sm);font-size:14px;background:var(--apple_surface);
+  transition:var(--transition_fast);font-family:inherit;color:var(--apple_text);
+}
+.industrial_input:focus{border-color:var(--status_info);outline:none;box-shadow:0 0 0 3px rgba(0,113,227,0.15);}
+select.industrial_input{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2386868B' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg>");background-repeat:no-repeat;background-position:right 10px center;padding-right:30px;}
+
+.btn_apple{
+  background:var(--status_info);color:#fff;border:none;
+  padding:12px 20px;border-radius:980px;font-size:14px;font-weight:500;
+  cursor:pointer;transition:var(--transition_fast);
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  width:100%;font-family:inherit;
+}
+.btn_apple:hover{opacity:0.9;}
+.btn_apple:disabled{opacity:0.4;cursor:not-allowed;}
+.btn_apple--ghost{background:transparent;color:var(--status_info);border:1px solid var(--status_info);}
+.btn_apple--ghost:hover{background:rgba(0,113,227,0.06);opacity:1;}
+.btn_apple--erro{background:var(--status_erro);}
+
+.status_badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:600;line-height:1.4;}
+.status_badge.sucesso{background:#E6F7ED;color:var(--status_sucesso);}
+.status_badge.alerta{background:#FFF4E5;color:var(--status_alerta);}
+.status_badge.info{background:#E6F1FC;color:var(--status_info);}
+.status_badge.erro{background:#FFEBEA;color:var(--status_erro);}
+.status_badge.neutro{background:#EFEFF1;color:var(--apple_text_secondary);}
+
+.factory_alert{background:#FFEBEA;border:1px solid var(--status_erro);border-radius:var(--radius_sm);padding:12px 14px;color:#D32F2F;font-size:13px;display:flex;align-items:center;gap:10px;}
+.pulse_dot{width:9px;height:9px;background:var(--status_erro);border-radius:50%;animation:pulse_indicador 2s infinite ease-in-out;flex-shrink:0;}
+@keyframes pulse_indicador{0%{transform:scale(0.95);opacity:0.4;}50%{transform:scale(1.1);opacity:1;}100%{transform:scale(0.95);opacity:0.4;}}
+
+/* ====== Chips de liga (scroll horizontal) ====== */
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.chips::-webkit-scrollbar{display:none;}
+.chip{
+  flex-shrink:0;border:1px solid var(--apple_border);background:var(--apple_surface);
+  padding:8px 14px;border-radius:980px;font-size:13px;font-weight:500;cursor:pointer;
+  display:inline-flex;align-items:center;gap:6px;transition:var(--transition_fast);color:var(--apple_text);
+}
+.chip .alloy_dot{width:10px;height:10px;border-radius:50%;border:1px solid rgba(0,0,0,0.1);}
+.chip:hover{background:var(--apple_bg);}
+.chip.active{background:var(--status_info);color:#fff;border-color:var(--status_info);}
+.chip.active .alloy_dot{border-color:rgba(255,255,255,0.4);}
+
+/* ====== Section title ====== */
+.section_title{font-size:13px;font-weight:600;color:var(--apple_text_secondary);text-transform:uppercase;letter-spacing:0.5px;display:flex;align-items:center;justify-content:space-between;margin-top:4px;}
+.section_title .count{font-size:12px;font-weight:500;color:var(--apple_text_secondary);text-transform:none;letter-spacing:0;}
+
+/* ====== Card de lote ====== */
+.lot_card{background:var(--apple_surface);border:1px solid var(--apple_border);border-radius:var(--radius_md);overflow:hidden;}
+.lot_card .lot_head{
+  display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;
+}
+.lot_card .lot_head .left{display:flex;align-items:center;gap:10px;}
+.lot_card .lot_head .alloy_dot{width:14px;height:14px;border-radius:50%;border:1px solid rgba(0,0,0,0.1);flex-shrink:0;}
+.lot_card .lot_head .lot_name{font-size:14px;font-weight:600;}
+.lot_card .lot_head .lot_meta{font-size:11px;color:var(--apple_text_secondary);margin-top:1px;}
+.lot_card .lot_head .right{display:flex;gap:6px;flex-direction:column;align-items:flex-end;font-size:11px;color:var(--apple_text_secondary);}
+.lot_card .lot_head .right strong{color:var(--apple_text);font-size:14px;font-weight:600;}
+.lot_card .lot_body{display:none;padding:0 12px 12px;border-top:1px solid var(--apple_border);margin-top:4px;}
+.lot_card.expanded .lot_body{display:block;}
+
+/* ====== Card de monte (selecionável) ====== */
+.pile_list{display:flex;flex-direction:column;gap:8px;padding-top:10px;}
+.pile_card{
+  border:1px solid var(--apple_border);border-radius:var(--radius_sm);
+  padding:10px 12px;display:flex;align-items:center;gap:10px;cursor:pointer;
+  background:var(--apple_surface);transition:var(--transition_fast);position:relative;
+}
+.pile_card:hover{background:var(--apple_bg);}
+.pile_card.selected{border-color:var(--status_info);background:#E6F1FC;}
+.pile_card .chk{
+  width:20px;height:20px;border-radius:50%;border:2px solid var(--apple_border);
+  flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:var(--transition_fast);
+}
+.pile_card.selected .chk{background:var(--status_info);border-color:var(--status_info);}
+.pile_card.selected .chk::after{content:"";width:6px;height:10px;border:2px solid #fff;border-top:0;border-left:0;transform:rotate(45deg) translate(-1px,-1px);}
+.pile_card.selected .chk i{width:12px;height:12px;color:#fff;}
+.pile_card .info{flex:1;min-width:0;}
+.pile_card .pos{font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;}
+.pile_card .pos .alloy_dot{width:8px;height:8px;border-radius:50%;border:1px solid rgba(0,0,0,0.1);}
+.pile_card .meta{font-size:11px;color:var(--apple_text_secondary);margin-top:2px;}
+.pile_card .right{text-align:right;display:flex;flex-direction:column;gap:3px;align-items:flex-end;}
+
+/* Timeline (histórico) */
+.timeline{display:flex;flex-direction:column;gap:0;padding:0;}
+.timeline_item{display:flex;gap:12px;padding:10px 0;position:relative;}
+.timeline_item:not(:last-child)::after{content:"";position:absolute;left:9px;top:28px;bottom:-10px;width:2px;background:var(--apple_border);}
+.timeline_item .dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--apple_border);background:var(--apple_surface);flex-shrink:0;display:flex;align-items:center;justify-content:center;margin-top:2px;}
+.timeline_item .dot.sucesso{border-color:var(--status_sucesso);}
+.timeline_item .dot.info{border-color:var(--status_info);}
+.timeline_item .dot.alerta{border-color:var(--status_alerta);}
+.timeline_item .dot.erro{border-color:var(--status_erro);}
+.timeline_item .body{flex:1;}
+.timeline_item .body .t{font-size:13px;font-weight:500;}
+.timeline_item .body .m{font-size:11px;color:var(--apple_text_secondary);margin-top:1px;}
+
+/* ====== Grade 2D de posição ====== */
+.position_grid_wrap{display:flex;flex-direction:column;gap:8px;}
+.position_grid{display:grid;gap:4px;background:var(--apple_bg);padding:8px;border-radius:var(--radius_sm);border:1px solid var(--apple_border);}
+.position_cell{
+  aspect-ratio:1;border:1px solid var(--apple_border);border-radius:4px;background:var(--apple_surface);
+  display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:var(--apple_text_secondary);
+  cursor:pointer;transition:var(--transition_fast);position:relative;
+}
+.position_cell:hover{border-color:var(--status_info);}
+.position_cell.occupied{background:#E6F1FC;color:var(--status_info);border-color:#B8D4F4;cursor:not-allowed;}
+.position_cell.occupied .alloy_dot{position:absolute;top:3px;right:3px;width:7px;height:7px;border-radius:50%;}
+.position_cell.selected{background:var(--status_sucesso);color:#fff;border-color:var(--status_sucesso);}
+.position_grid axis_labels{font-size:10px;color:var(--apple_text_secondary);}
+
+/* ====== Action sheet (bottom) ====== */
+.sheet_overlay{position:absolute;inset:0;background:rgba(0,0,0,0.4);z-index:90;display:none;}
+.sheet_overlay.show{display:block;}
+.action_sheet{
+  position:absolute;left:0;right:0;bottom:0;z-index:100;
+  background:var(--apple_surface);border-top-left-radius:18px;border-top-right-radius:18px;
+  box-shadow:0 -4px 20px rgba(0,0,0,0.15);
+  transform:translateY(100%);transition:transform 0.25s ease-out;
+  max-height:80%;display:flex;flex-direction:column;
+}
+.action_sheet.show{transform:translateY(0);}
+.action_sheet .handle{width:40px;height:4px;background:var(--apple_border);border-radius:2px;margin:10px auto 4px;flex-shrink:0;}
+.action_sheet .sheet_title{padding:6px 20px 12px;font-size:16px;font-weight:600;border-bottom:1px solid var(--apple_border);flex-shrink:0;}
+.action_sheet .sheet_body{overflow-y:auto;padding:8px 0;flex:1;-webkit-overflow-scrolling:touch;}
+.sheet_option{display:flex;align-items:center;gap:14px;padding:14px 20px;cursor:pointer;transition:var(--transition_fast);border:none;background:transparent;width:100%;text-align:left;font-family:inherit;color:var(--apple_text);}
+.sheet_option:hover{background:var(--apple_bg);}
+.sheet_option i{width:22px;height:22px;flex-shrink:0;}
+.sheet_option .label{font-size:15px;font-weight:500;}
+.sheet_option .desc{font-size:12px;color:var(--apple_text_secondary);margin-top:1px;}
+.sheet_option.erro i,.sheet_option.erro .label{color:var(--status_erro);}
+.sheet_footer{padding:14px 20px;border-top:1px solid var(--apple_border);flex-shrink:0;display:flex;gap:10px;}
+
+/* ====== Modal de formulário dentro do sheet ====== */
+.sheet_form{padding:16px 20px;display:flex;flex-direction:column;gap:12px;}
+
+/* ====== Empty hint ====== */
+.empty_hint{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:40px 20px;text-align:center;color:var(--apple_text_secondary);}
+.empty_hint i{width:32px;height:32px;color:var(--apple_border);}
+.empty_hint .t{font-size:14px;font-weight:500;color:var(--apple_text);}
+.empty_hint .s{font-size:12px;}
+
+/* ====== Toast ====== */
+.toast{position:absolute;left:50%;bottom:78px;transform:translateX(-50%) translateY(100px);background:var(--apple_text);color:#fff;padding:10px 16px;border-radius:980px;font-size:13px;font-weight:500;z-index:300;opacity:0;transition:all 0.25s ease;display:flex;align-items:center;gap:8px;max-width:90%;}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+
+.page{display:none;flex-direction:column;gap:12px;height:100%;}
+.page.active{display:flex;}
+
+.fab{
+  position:absolute;right:16px;bottom:76px;width:52px;height:52px;border-radius:50%;
+  background:var(--status_info);color:#fff;border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,113,227,0.4);
+  z-index:50;
+}
+.fab i{width:24px;height:24px;}
+
+.divider{height:1px;background:var(--apple_border);margin:4px 0;}
+.row_between{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.small_muted{font-size:11px;color:var(--apple_text_secondary);}
+
+.icon_16{width:16px;height:16px;}
+</style>
+</head>
+<body>
+
+<!-- Seletor de viewport (utilitário de protótipo — remover no produto) -->
+<div class="viewport_bar">
+  <div class="brand"><i data-lucide="factory" class="icon_16"></i> Protótipo · Controle de Chumbo</div>
+  <div class="vp_buttons">
+    <button data-vp="375" class="active">375px</button>
+    <button data-vp="390">390px</button>
+    <button data-vp="768">Tablet</button>
+    <button data-vp="desktop">Desktop</button>
+  </div>
+</div>
+
+<div id="device_frame" class="is_mobile" style="width:390px;">
+<div class="app">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="title">
+      <span id="tb_back_wrap" style="display:none;">
+        <button class="back_btn" onclick="navigate('estoque')"><i data-lucide="chevron-left" class="icon_16"></i> Voltar</button>
+      </span>
+      <i data-lucide="factory" id="tb_icon"></i>
+      <span id="tb_title">Estoque de Chumbo</span>
+    </div>
+    <div class="topright">
+      <i data-lucide="bell" class="icon_16"></i>
+      <span><i data-lucide="user" class="icon_16"></i> Liberador</span>
+    </div>
+  </div>
+
+  <!-- Conteúdo -->
+  <div class="content" id="content">
+
+    <!-- ============ PÁGINA: ESTOQUE ============ -->
+    <div class="page active" id="page-estoque">
+      <div class="factory_alert" style="background:#FFF4E5;border-color:var(--status_alerta);color:#A86400;">
+        <div class="pulse_dot" style="background:var(--status_alerta);"></div>
+        <span><strong>Atenção:</strong> Liga 6 (positiva) está com baixo saldo no estoque.</span>
+      </div>
+
+      <!-- Chips de liga -->
+      <div class="chips" id="alloy_chips_estoque"></div>
+
+      <!-- KPIs (aba da liga selecionada) -->
+      <div class="grid_kpi">
+        <div class="kpi_card">
+          <div class="kpi_label">Peso no estoque</div>
+          <div class="kpi_value" id="kpi_peso">— <span class="kpi_unit">kg</span></div>
+        </div>
+        <div class="kpi_card">
+          <div class="kpi_label">Barras no estoque</div>
+          <div class="kpi_value" id="kpi_barras">—</div>
+        </div>
+        <div class="kpi_card">
+          <div class="kpi_label">Reservado</div>
+          <div class="kpi_value kpi_value--alerta" id="kpi_reservado">— <span class="kpi_unit">kg</span></div>
+        </div>
+        <div class="kpi_card">
+          <div class="kpi_label">No setor</div>
+          <div class="kpi_value kpi_value--info" id="kpi_setor">— <span class="kpi_unit">kg</span></div>
+        </div>
+      </div>
+
+      <div class="section_title" style="margin-top:6px;">Lotes <span class="count" id="lotes_count">0</span></div>
+      <div id="lotes_list" style="display:flex;flex-direction:column;gap:10px;"></div>
+    </div>
+
+    <!-- ============ PÁGINA: MOVIMENTAR ============ -->
+    <div class="page" id="page-movimentar">
+      <div class="section_title" style="margin-top:0;">1. Selecione a liga</div>
+      <div class="chips" id="alloy_chips_mov"></div>
+
+      <div class="section_title">2. Selecione o lote</div>
+      <div class="chips" id="lot_chips_mov"></div>
+
+      <div class="row_between">
+        <div class="section_title" style="margin:0;">3. Toque nos montes</div>
+        <span class="small_muted" id="mov_selected_count">0 selecionados</span>
+      </div>
+      <div id="mov_piles"></div>
+
+      <button class="btn_apple" id="mov_actions_btn" disabled onclick="openActionSheet()" style="margin-top:4px;">
+        <i data-lucide="settings-2" class="icon_16"></i> Escolher ação
+      </button>
+    </div>
+
+    <!-- ============ PÁGINA: NOVA ENTRADA ============ -->
+    <div class="page" id="page-entrada">
+      <div class="form_box">
+        <div class="input_group">
+          <label class="input_label">Liga</label>
+          <select class="industrial_input" id="ent_alloy">
+            <option value="LIGA_0">Liga 0 — Chumbo puro (preto)</option>
+            <option value="LIGA_4">Liga 4 — Pb+Estanho (verde)</option>
+            <option value="LIGA_5" selected>Liga 5 — Negativa (vermelho)</option>
+            <option value="LIGA_6">Liga 6 — Positiva (amarelo)</option>
+          </select>
+        </div>
+        <div class="form_grid">
+          <div class="input_group">
+            <label class="input_label">Lote</label>
+            <input type="text" class="industrial_input" placeholder="Ex.: L2026-014" value="L2026-014">
+          </div>
+          <div class="input_group">
+            <label class="input_label">Data de entrada</label>
+            <input type="date" class="industrial_input" value="2026-07-08">
+          </div>
+          <div class="input_group">
+            <label class="input_label">Qtd. de barras</label>
+            <input type="number" class="industrial_input" value="50">
+          </div>
+          <div class="input_group">
+            <label class="input_label">Peso total (kg)</label>
+            <input type="number" class="industrial_input" value="1300" step="0.1">
+          </div>
+        </div>
+        <div class="input_group">
+          <label class="input_label">Fornecedor (informativo)</label>
+          <select class="industrial_input" id="ent_supplier">
+            <option value="interno">Interno (padrão 50 barras)</option>
+            <option value="externo">Externo (padrão 35 barras)</option>
+          </select>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="section_title" style="margin:0;">Posição de armazenamento (2D)</div>
+        <div class="small_muted">Almoxarifado · Linha × Coluna · toque numa célula livre</div>
+        <div class="position_grid_wrap">
+          <div class="position_grid" id="position_grid"></div>
+        </div>
+        <div class="small_muted" id="pos_selected_label">Nenhuma posição selecionada</div>
+
+        <button class="btn_apple" onclick="simulateEntry()"><i data-lucide="plus" class="icon_16"></i> Registrar entrada</button>
+      </div>
+    </div>
+
+    <!-- ============ PÁGINA: CONSUMO TELEIRA ============ -->
+    <div class="page" id="page-consumo">
+      <div class="factory_alert" style="background:#E6F1FC;border-color:var(--status_info);color:var(--status_info);">
+        <div class="pulse_dot" style="background:var(--status_info);"></div>
+        <span><strong>Setor padrão:</strong> Teleiras (consumo na fundidora de grade).</span>
+      </div>
+      <div class="form_box">
+        <div class="input_group">
+          <label class="input_label">Setor</label>
+          <input type="text" class="industrial_input" value="Teleiras" readonly>
+        </div>
+        <div class="form_grid">
+          <div class="input_group">
+            <label class="input_label">Lote do chumbo</label>
+            <select class="industrial_input">
+              <option>L2026-014</option>
+              <option>L2026-015</option>
+              <option>L2026-011</option>
+            </select>
+          </div>
+          <div class="input_group">
+            <label class="input_label">Monte (opcional)</label>
+            <select class="industrial_input">
+              <option>— específico —</option>
+              <option>M-042 (L4)</option>
+              <option>M-051 (L4)</option>
+            </select>
+          </div>
+          <div class="input_group">
+            <label class="input_label">Peso consumido (kg)</label>
+            <input type="number" class="industrial_input" value="78" step="0.1">
+          </div>
+          <div class="input_group">
+            <label class="input_label">Barras consumidas</label>
+            <input type="number" class="industrial_input" value="3">
+          </div>
+        </div>
+        <div class="form_grid">
+          <div class="input_group">
+            <label class="input_label">Operador</label>
+            <input type="text" class="industrial_input" placeholder="Selecionar...">
+          </div>
+          <div class="input_group">
+            <label class="input_label">Data</label>
+            <input type="date" class="industrial_input" value="2026-07-08">
+          </div>
+        </div>
+        <button class="btn_apple" onclick="showToast('Consumo registrado','check-circle')"><i data-lucide=" Zap" class="icon_16"></i> Registrar consumo</button>
+      </div>
+    </div>
+
+    <!-- ============ PÁGINA: DETALHE DO MONTE ============ -->
+    <div class="page" id="page-detalhe">
+      <div class="lot_card" id="det_card"></div>
+      <div class="section_title" style="margin-top:6px;">Histórico de movimentações</div>
+      <div class="form_box" style="padding:14px;">
+        <div class="timeline" id="det_timeline"></div>
+      </div>
+      <button class="btn_apple btn_apple--ghost" onclick="navigate('estoque')"><i data-lucide="arrow-left" class="icon_16"></i> Voltar ao estoque</button>
+    </div>
+
+  </div>
+
+  <!-- Bottom nav -->
+  <div class="bottom_nav">
+    <button class="active" data-page="estoque" onclick="navigate('estoque')"><i data-lucide="layers"></i> Estoque</button>
+    <button data-page="movimentar" onclick="navigate('movimentar')"><i data-lucide="arrow-left-right"></i> Movimentar</button>
+    <button data-page="entrada" onclick="navigate('entrada')"><i data-lucide="package-plus"></i> Entrada</button>
+    <button data-page="consumo" onclick="navigate('consumo')"><i data-lucide="zap"></i> Consumo</button>
+  </div>
+
+  <!-- FAB (atalho novo monte) -->
+  <button class="fab" onclick="navigate('entrada')" title="Nova entrada"><i data-lucide="plus"></i></button>
+
+  <!-- Action sheet de movimentação -->
+  <div class="sheet_overlay" id="sheet_overlay" onclick="closeActionSheet()"></div>
+  <div class="action_sheet" id="action_sheet">
+    <div class="handle"></div>
+    <div class="sheet_title" id="sheet_title">Escolha a ação</div>
+    <div class="sheet_body" id="sheet_body"></div>
+    <div class="sheet_footer" id="sheet_footer" style="display:none;">
+      <button class="btn_apple btn_apple--ghost" onclick="closeActionSheet()">Cancelar</button>
+      <button class="btn_apple" id="sheet_confirm_btn">Confirmar</button>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"><i data-lucide="check-circle" class="icon_16"></i><span id="toast_msg"></span></div>
+
+</div>
+</div>
+
+<script>
+/* ============================================================
+   DADOS MOCKADOS — realistas ao domínio (PRD §1.2)
+   ============================================================ */
+const ALLOYS = {
+  LIGA_0:{name:'Liga 0',desc:'Chumbo puro',color:'var(--liga0)'},
+  LIGA_4:{name:'Liga 4',desc:'Pb+Estanho',color:'var(--liga4)'},
+  LIGA_5:{name:'Liga 5',desc:'Negativa',color:'var(--liga5)'},
+  LIGA_6:{name:'Liga 6',desc:'Positiva',color:'var(--liga6)'},
+};
+const ALLOY_KEYS = ['LIGA_0','LIGA_4','LIGA_5','LIGA_6'];
+const SECTORS = ['Teleiras','Boleira','Moinho','Masseira','Empastadeira','Montagem','Formação'];
+
+// estado por monte: IN_STOCK, RESERVED, IN_SECTOR, PARTIAL, MOVED, SOLD, ADJUSTED
+let PILES = [
+  // L2026-014 (Liga 5)
+  {id:'M-101',alloy:'LIGA_5',lot:'L2026-014',bars:50,weight:1300,position:[1,1],status:'IN_STOCK',sector:null,
+   history:[
+     {t:'Entrada no estoque',m:'L2026-014 • 50 barras • 1300 kg • Fornecedor interno',kind:'info',when:'02/07 08:12'},
+   ]},
+  {id:'M-102',alloy:'LIGA_5',lot:'L2026-014',bars:50,weight:1300,position:[1,2],status:'RESERVED',sector:'Teleiras',
+   history:[
+     {t:'Entrada no estoque',m:'L2026-014 • 50 barras',kind:'info',when:'02/07 08:12'},
+     {t:'Reservado para Teleiras',m:'Pelo liberador',kind:'alerta',when:'03/07 14:20'},
+   ]},
+  {id:'M-103',alloy:'LIGA_5',lot:'L2026-014',bars:35,weight:910,position:[1,3],status:'IN_STOCK',sector:null,
+   history:[
+     {t:'Entrada no estoque',m:'L2026-014 • 35 barras • 910 kg • Fornecedor externo',kind:'info',when:'04/07 09:00'},
+   ]},
+  {id:'M-104',alloy:'LIGA_5',lot:'L2026-014',bars:27,weight:702,position:[2,1],status:'PARTIAL',sector:'Teleiras',
+   history:[
+     {t:'Entrada no estoque',m:'50 barras',kind:'info',when:'02/07 08:12'},
+     {t:'Reservado para Teleiras',m:'',kind:'alerta',when:'03/07 14:20'},
+     {t:'Movido parcial ao setor',m:'23 barras enviadas • 27 restantes (reservado)',kind:'info',when:'05/07 10:30'},
+   ]},
+  // L2026-015 (Liga 6 - positiva)
+  {id:'M-201',alloy:'LIGA_6',lot:'L2026-015',bars:50,weight:1300,position:[2,2],status:'IN_STOCK',sector:null,
+   history:[{t:'Entrada no estoque',m:'L2026-015 • 50 barras',kind:'info',when:'06/07 07:40'}]},
+  {id:'M-202',alloy:'LIGA_6',lot:'L2026-015',bars:50,weight:1300,position:[2,3],status:'IN_SECTOR',sector:'Teleiras',
+   history:[
+     {t:'Entrada no estoque',m:'',kind:'info',when:'06/07 07:40'},
+     {t:'Movido ao setor Teleiras',m:'50 barras • 1300 kg',kind:'sucesso',when:'06/07 16:10'},
+   ]},
+  {id:'M-203',alloy:'LIGA_6',lot:'L2026-015',bars:50,weight:1298,position:[3,1],status:'SOLD',sector:null,
+   history:[
+     {t:'Entrada no estoque',m:'',kind:'info',when:'06/07 07:40'},
+     {t:'Venda direta',m:'Saída externa • 50 barras',kind:'erro',when:'07/07 11:00'},
+   ]},
+  // L2026-011 (Liga 0)
+  {id:'M-301',alloy:'LIGA_0',lot:'L2026-011',bars:50,weight:1305,position:[3,2],status:'IN_STOCK',sector:null,
+   history:[{t:'Entrada no estoque',m:'L2026-011 • 50 barras',kind:'info',when:'01/07 09:00'}]},
+  {id:'M-302',alloy:'LIGA_0',lot:'L2026-011',bars:50,weight:1296,position:[3,3],status:'ADJUSTED',sector:null,
+   history:[
+     {t:'Entrada no estoque',m:'',kind:'info',when:'01/07 09:00'},
+     {t:'Ajuste',m:'Correção de peso: 1300 → 1296 kg',kind:'alerta',when:'02/07 10:15'},
+   ]},
+  // L2026-018 (Liga 4)
+  {id:'M-401',alloy:'LIGA_4',lot:'L2026-018',bars:50,weight:1302,position:[4,1],status:'IN_STOCK',sector:null,
+   history:[{t:'Entrada no estoque',m:'L2026-018 • 50 barras',kind:'info',when:'07/07 08:00'}]},
+  {id:'M-402',alloy:'LIGA_4',lot:'L2026-018',bars:47,weight:1222,position:[4,2],status:'IN_STOCK',sector:null,
+   history:[{t:'Entrada no estoque',m:'L2026-018 • 47 barras',kind:'info',when:'07/07 08:00'}]},
+];
+
+// posição 2D (almoxarifado 5x4)
+const GRID_ROWS = 5, GRID_COLS = 4;
+let selectedPosition = null;
+
+//_estado UI
+let activeAlloyEstoque = 'LIGA_5';
+let activeAlloyMov = 'LIGA_5';
+let activeLotMov = 'L2026-014';
+let selectedPiles = new Set();
+let currentDetailPile = null;
+
+/* ============================================================
+   RENDER helpers
+   ============================================================ */
+function alloyColor(a){return ALLOYS[a].color;}
+function alloyName(a){return ALLOYS[a].name;}
+function alloyDesc(a){return ALLOYS[a].desc;}
+
+function statusInfo(s){
+  switch(s){
+    case 'IN_STOCK': return {label:'Em estoque',cls:'info'};
+    case 'RESERVED': return {label:'Reservado',cls:'alerta'};
+    case 'IN_SECTOR': return {label:'No setor',cls:'sucesso'};
+    case 'PARTIAL': return {label:'Parcial',cls:'alerta'};
+    case 'MOVED': return {label:'Movido',cls:'neutro'};
+    case 'SOLD': return {label:'Vendido',cls:'erro'};
+    case 'ADJUSTED': return {label:'Ajustado',cls:'neutro'};
+    default: return {label:s,cls:'neutro'};
+  }
+}
+
+// Chips de liga (renderiza em qualquer container com o seletor de liga + callback)
+function renderAlloyChips(container, activeKey, onClick){
+  container.innerHTML = '';
+  ALLOY_KEYS.forEach(k=>{
+    const c = document.createElement('button');
+    c.className = 'chip' + (k===activeKey?' active':'');
+    c.innerHTML = `<span class="alloy_dot" style="background:${alloyColor(k)};"></span>${alloyName(k)}`;
+    c.onclick = ()=>{ onClick(k); };
+    container.appendChild(c);
+  });
+}
+
+/* ============================================================
+   PÁGINA: ESTOQUE
+   ============================================================ */
+function renderEstoque(){
+  renderAlloyChips(document.getElementById('alloy_chips_estoque'), activeAlloyEstoque, (k)=>{
+    activeAlloyEstoque = k; renderEstoque();
+  });
+
+  const pilesOfAlloy = PILES.filter(p=>p.alloy===activeAlloyEstoque);
+  const inStock = pilesOfAlloy.filter(p=>p.status==='IN_STOCK' || p.status==='PARTIAL' || p.status==='ADJUSTED');
+  const reserved = pilesOfAlloy.filter(p=>p.status==='RESERVED' || p.status==='PARTIAL');
+  const inSector = pilesOfAlloy.filter(p=>p.status==='IN_SECTOR');
+
+  const pesoEstoque = inStock.reduce((s,p)=>s+p.weight,0);
+  const barrasEstoque = inStock.reduce((s,p)=>s+p.bars,0);
+  const pesoReserv = reserved.reduce((s,p)=>s+p.weight,0);
+  const pesoSetor = inSector.reduce((s,p)=>s+p.weight,0);
+
+  document.getElementById('kpi_peso').innerHTML = `${pesoEstoque.toLocaleString('pt-BR')} <span class="kpi_unit">kg</span>`;
+  document.getElementById('kpi_barras').textContent = barrasEstoque;
+  document.getElementById('kpi_reservado').innerHTML = `${pesoReserv.toLocaleString('pt-BR')} <span class="kpi_unit">kg</span>`;
+  document.getElementById('kpi_setor').innerHTML = `${pesoSetor.toLocaleString('pt-BR')} <span class="kpi_unit">kg</span>`;
+
+  // Agrupar por lote
+  const lotes = {};
+  pilesOfAlloy.forEach(p=>{ (lotes[p.lot] = lotes[p.lot] || []).push(p); });
+  const lotList = document.getElementById('lotes_list');
+  lotList.innerHTML = '';
+  const lotKeys = Object.keys(lotes).sort();
+  document.getElementById('lotes_count').textContent = `${lotKeys.length} lote(s) · ${pilesOfAlloy.length} montes`;
+
+  if(lotKeys.length===0){
+    lotList.innerHTML = `<div class="empty_hint"><i data-lucide="package-open"></i><div class="t">Nenhum monte para esta liga</div><div class="s">Toque em "Entrada" para registrar.</div></div>`;
+    lucide.createIcons(); return;
+  }
+
+  lotKeys.forEach(lk=>{
+    const arr = lotes[lk];
+    const lPeso = arr.reduce((s,p)=>s+p.weight,0);
+    const lBarras = arr.reduce((s,p)=>s+p.bars,0);
+    const inStockCount = arr.filter(p=>p.status==='IN_STOCK' || p.status==='PARTIAL').length;
+
+    const card = document.createElement('div');
+    card.className = 'lot_card';
+    card.innerHTML = `
+      <div class="lot_head">
+        <div class="left">
+          <span class="alloy_dot" style="background:${alloyColor(activeAlloyEstoque)};"></span>
+          <div>
+            <div class="lot_name">${lk}</div>
+            <div class="lot_meta">${alloyDesc(activeAlloyEstoque)} · ${arr.length} montes</div>
+          </div>
+        </div>
+        <div class="right">
+          <strong>${lPeso.toLocaleString('pt-BR')} kg</strong>
+          <span>${lBarras} barras · ${inStockCount} no estoque</span>
+        </div>
+      </div>
+      <div class="lot_body">
+        <div class="pile_list"></div>
+      </div>
+    `;
+    card.querySelector('.lot_head').onclick = ()=>{ card.classList.toggle('expanded'); };
+    const pl = card.querySelector('.pile_list');
+    arr.forEach(p=>{
+      const si = statusInfo(p.status);
+      const pc = document.createElement('div');
+      pc.className = 'pile_card';
+      pc.innerHTML = `
+        <div class="info">
+          <div class="pos"><span class="alloy_dot" style="background:${alloyColor(p.alloy)};"></span>${p.id} · L${p.position[0]}/C${p.position[1]}</div>
+          <div class="meta">${p.bars} barras · ${p.weight.toLocaleString('pt-BR')} kg${p.sector? ' · → '+p.sector:''}</div>
+        </div>
+        <div class="right">
+          <span class="status_badge ${si.cls}">${si.label}</span>
+        </div>
+      `;
+      pc.onclick = ()=>openDetail(p.id);
+      pl.appendChild(pc);
+    });
+    lotList.appendChild(card);
+  });
+  // dispensa a primeira abertura ble> : expande primeiro lote
+  if(lotList.firstChild) lotList.firstChild.classList.add('expanded');
+  lucide.createIcons();
+}
+
+/* ============================================================
+   PÁGINA: MOVIMENTAR
+   ============================================================ */
+function renderMovimentar(){
+  renderAlloyChips(document.getElementById('alloy_chips_mov'), activeAlloyMov, (k)=>{
+    activeAlloyMov = k; selectedPiles.clear();
+    // reajusta lote ativo
+    const lots = [...new Set(PILES.filter(p=>p.alloy===k).map(p=>p.lot))].sort();
+    activeLotMov = lots[0] || null;
+    renderMovimentar();
+  });
+
+  // chips de lote
+  const lc = document.getElementById('lot_chips_mov');
+  lc.innerHTML = '';
+  const lots = [...new Set(PILES.filter(p=>p.alloy===activeAlloyMov).map(p=>p.lot))].sort();
+  if(lots.length===0){
+    lc.innerHTML = `<span class="small_muted">Nenhum lote para esta liga.</span>`;
+  } else {
+    lots.forEach(l=>{
+      const c = document.createElement('button');
+      c.className = 'chip' + (l===activeLotMov?' active':'');
+      c.innerHTML = l;
+      c.onclick = ()=>{ activeLotMov = l; selectedPiles.clear(); renderMovimentar(); };
+      lc.appendChild(c);
+    });
+  }
+
+  // montes do lote (somente manipuláveis: IN_STOCK, RESERVED, PARTIAL)
+  const mov = document.getElementById('mov_piles');
+  mov.innerHTML = '';
+  const piles = PILES.filter(p=>p.alloy===activeAlloyMov && p.lot===activeLotMov && ['IN_STOCK','RESERVED','PARTIAL','IN_SECTOR'].includes(p.status));
+  if(piles.length===0){
+    mov.innerHTML = `<div class="empty_hint"><i data-lucide="mouse-pointer-click"></i><div class="t">Nenhum monte disponível</div><div class="s">Selecione outra liga/lote.</div></div>`;
+    lucide.createIcons(); updateMovBtn(); return;
+  }
+  piles.forEach(p=>{
+    const si = statusInfo(p.status);
+    const pc = document.createElement('div');
+    pc.className = 'pile_card' + (selectedPiles.has(p.id)?' selected':'');
+    pc.innerHTML = `
+      <div class="chk"></div>
+      <div class="info">
+        <div class="pos"><span class="alloy_dot" style="background:${alloyColor(p.alloy)};"></span>${p.id} · L${p.position[0]}/C${p.position[1]}</div>
+        <div class="meta">${p.bars} barras · ${p.weight.toLocaleString('pt-BR')} kg${p.sector? ' · → '+p.sector:''}</div>
+      </div>
+      <div class="right">
+        <span class="status_badge ${si.cls}">${si.label}</span>
+      </div>
+    `;
+    pc.onclick = ()=>{
+      if(selectedPiles.has(p.id)) selectedPiles.delete(p.id);
+      else selectedPiles.add(p.id);
+      renderMovimentar();
+    };
+    mov.appendChild(pc);
+  });
+  document.getElementById('mov_selected_count').textContent = `${selectedPiles.size} selecionado(s)`;
+  updateMovBtn();
+  lucide.createIcons();
+}
+
+function updateMovBtn(){
+  const btn = document.getElementById('mov_actions_btn');
+  btn.disabled = selectedPiles.size===0;
+}
+
+/* ============================================================
+   ACTION SHEET (ações de movimentação)
+   ============================================================ */
+const ACTIONS = [
+  {id:'reservar',icon:'lock',label:'Reservar',desc:'Marcar monte(s) para um setor (permanece no estoque)',kind:''},
+  {id:'mover_setor',icon:'truck',label:'Mover ao setor',desc:'Saída total do monte para o setor (consumo)',kind:''},
+  {id:'mover_parcial',icon:'git-branch',label:'Mover ao setor (parcial)',desc:'Enviar apenas algumas barras; restante fica reservado',kind:''},
+  {id:'cancelar_reserva',icon:'x-circle',label:'Cancelar reserva',desc:'Libera o monte reservado de volta ao estoque',kind:''},
+  {id:'venda_direta',icon:'dollar-sign',label:'Venda direta',desc:'Saída para destino fora dos setores cadastrados',kind:'erro'},
+  {id:'ajuste',icon:'sliders',label:'Ajuste',desc:'Corrigir erro (peso, qtd de barras, etc.)',kind:''},
+];
+
+function openActionSheet(){
+  if(selectedPiles.size===0) return;
+  document.getElementById('sheet_overlay').classList.add('show');
+  const sheet = document.getElementById('action_sheet'); sheet.classList.add('show');
+  document.getElementById('sheet_title').textContent = `${selectedPiles.size} monte(s) selecionado(s) · escolha a ação`;
+  const body = document.getElementById('sheet_body');
+  document.getElementById('sheet_footer').style.display = 'none';
+  body.innerHTML = '';
+  ACTIONS.forEach(a=>{
+    const b = document.createElement('button');
+    b.className = 'sheet_option' + (a.kind==='erro'?' erro':'');
+    b.innerHTML = `
+      <i data-lucide="${a.icon}"></i>
+      <div><div class="label">${a.label}</div><div class="desc">${a.desc}</div></div>
+    `;
+    b.onclick = ()=>openActionForm(a.id);
+    body.appendChild(b);
+  });
+  lucide.createIcons();
+}
+
+function closeActionSheet(){
+  document.getElementById('sheet_overlay').classList.remove('show');
+  document.getElementById('action_sheet').classList.remove('show');
+  document.getElementById('sheet_footer').style.display = 'none';
+}
+
+function openActionForm(actionId){
+  const body = document.getElementById('sheet_body');
+  const footer = document.getElementById('sheet_footer');
+  const titleEl = document.getElementById('sheet_title');
+  const ids = [...selectedPiles];
+  const piles = PILES.filter(p=>ids.includes(p.id));
+
+  let html = '';
+  let title = '';
+  let confirmLabel = 'Confirmar';
+
+  if(actionId==='reservar'){
+    title = 'Reservar montes';
+    confirmLabel = 'Reservar';
+    html = `
+      <div class="sheet_form">
+        <div class="input_group">
+          <label class="input_label">Setor de destino</label>
+          <select class="industrial_input" id="act_sector">
+            ${SECTORS.map(s=>`<option ${s==='Teleiras'?'selected':''}>${s}</option>`).join('')}
+          </select>
+        </div>
+        <div class="small_muted">${piles.length} monte(s): ${piles.map(p=>p.id).join(', ')}</div>
+      </div>`;
+  } else if(actionId==='mover_setor'){
+    title = 'Mover ao setor (total)';
+    confirmLabel = 'Mover';
+    html = `
+      <div class="sheet_form">
+        <div class="input_group">
+          <label class="input_label">Setor de destino</label>
+          <select class="industrial_input" id="act_sector">
+            ${SECTORS.map(s=>`<option ${s==='Teleiras'?'selected':''}>${s}</option>`).join('')}
+          </select>
+        </div>
+        <div class="small_muted">Saída total de ${piles.length} monte(s) · ${piles.reduce((s,p)=>s+p.bars,0)} barras.</div>
+      </div>`;
+  } else if(actionId==='mover_parcial'){
+    title = 'Mover ao setor (parcial)';
+    confirmLabel = 'Enviar parcial';
+    const first = piles[0];
+    const maxBars = first? first.bars : 0;
+    html = `
+      <div class="sheet_form">
+        ${piles.length>1 ? `<div class="factory_alert" style="background:#FFF4E5;border-color:var(--status_alerta);color:#A86400;"><div class="pulse_dot" style="background:var(--status_alerta);"></div><span>Parcial opera em <strong>1 monte por vez</strong>. Continue com o primeiro selecionado: <strong>${first.id}</strong>.</span></div>` : ''}
+        <div class="input_group">
+          <label class="input_label">Setor de destino</label>
+          <select class="industrial_input" id="act_sector">
+            ${SECTORS.map(s=>`<option ${s==='Teleiras'?'selected':''}>${s}</option>`).join('')}
+          </select>
+        </div>
+        <div class="input_group">
+          <label class="input_label">Barras a enviar (de ${maxBars})</label>
+          <input type="number" class="industrial_input" id="act_bars" value="${Math.min(10,maxBars)}" min="1" max="${maxBars}">
+        </div>
+        <div class="small_muted">O restante permanece reservado no estoque e pode sofrer novas alterações.</div>
+      </div>`;
+  } else if(actionId==='cancelar_reserva'){
+    title = 'Cancelar reserva';
+    confirmLabel = 'Cancelar reserva';
+    html = `<div class="sheet_form"><div class="small_muted">Cancelar reserva de ${piles.length} monte(s)? Eles voltam ao status "Em estoque".</div></div>`;
+  } else if(actionId==='venda_direta'){
+    title = 'Venda direta';
+    confirmLabel = 'Registrar venda';
+    html = `
+      <div class="sheet_form">
+        <div class="input_group">
+          <label class="input_label">Destino (fora dos setores)</label>
+          <input type="text" class="industrial_input" placeholder="Ex.: Cliente XYZ / Revenda">
+        </div>
+        <div class="small_muted">${piles.length} monte(s) · ${piles.reduce((s,p)=>s+p.bars,0)} barras.</div>
+      </div>`;
+  } else if(actionId==='ajuste'){
+    title = 'Ajuste';
+    confirmLabel = 'Salvar ajuste';
+    const first = piles[0];
+    html = `
+      <div class="sheet_form">
+        ${piles.length>1 ? `<div class="small_muted">Ajuste opera em 1 monte por vez. Editando <strong>${first.id}</strong>.</div>`:''}
+        <div class="form_grid">
+          <div class="input_group">
+            <label class="input_label">Barras</label>
+            <input type="number" class="industrial_input" id="adj_bars" value="${first.bars}">
+          </div>
+          <div class="input_group">
+            <label class="input_label">Peso total (kg)</label>
+            <input type="number" class="industrial_input" id="adj_weight" value="${first.weight}" step="0.1">
+          </div>
+        </div>
+        <div class="input_group">
+          <label class="input_label">Motivo</label>
+          <input type="text" class="industrial_input" placeholder="Ex.: erro de digitação na entrada">
+        </div>
+      </div>`;
+  }
+
+  titleEl.textContent = title;
+  body.innerHTML = html;
+  footer.style.display = 'flex';
+  lucide.createIcons();
+  document.getElementById('sheet_confirm_btn').onclick = ()=>{
+    applyAction(actionId, piles);
+  };
+}
+
+function applyAction(actionId, piles){
+  const ids = piles.map(p=>p.id);
+  const now = new Date();
+  const when = now.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+
+  if(actionId==='reservar'){
+    const sector = (document.getElementById('act_sector')||{}).value || 'Teleiras';
+    PILES.forEach(p=>{ if(ids.includes(p.id)){ p.status='RESERVED'; p.sector=sector;
+      p.history.push({t:'Reservado para '+sector,m:'Pelo liberador',kind:'alerta',when}); }});
+    showToast('Montes reservados para '+sector,'lock');
+  } else if(actionId==='mover_setor'){
+    const sector = (document.getElementById('act_sector')||{}).value || 'Teleiras';
+    PILES.forEach(p=>{ if(ids.includes(p.id)){ p.status='IN_SECTOR'; p.sector=sector;
+      p.history.push({t:'Movido ao setor '+sector,m:p.bars+' barras · '+p.weight+' kg',kind:'sucesso',when}); }});
+    showToast('Montes movidos ao setor','truck');
+  } else if(actionId==='mover_parcial'){
+    const sector = (document.getElementById('act_sector')||{}).value || 'Teleiras';
+    const sendBars = parseInt(document.getElementById('act_bars').value,10) || 0;
+    const first = piles[0];
+    if(first && sendBars>0 && sendBars<first.bars){
+      first.bars -= sendBars;
+      first.status='PARTIAL'; first.sector=sector;
+      first.history.push({t:'Movido parcial ao setor '+sector,m:sendBars+' barras enviadas · '+first.bars+' restantes (reservado)',kind:'info',when});
+    }
+    showToast('Parcial enviado ('+sendBars+' barras)','git-branch');
+  } else if(actionId==='cancelar_reserva'){
+    PILES.forEach(p=>{ if(ids.includes(p.id)){ p.status='IN_STOCK'; p.sector=null;
+      p.history.push({t:'Reserva cancelada',m:'Voltou ao estoque',kind:'info',when}); }});
+    showToast('Reserva cancelada','x-circle');
+  } else if(actionId==='venda_direta'){
+    PILES.forEach(p=>{ if(ids.includes(p.id)){ p.status='SOLD'; p.sector=null;
+      p.history.push({t:'Venda direta',m:'Saída externa · '+p.bars+' barras',kind:'erro',when}); }});
+    showToast('Venda direta registrada','dollar-sign');
+  } else if(actionId==='ajuste'){
+    const first = piles[0];
+    const nb = parseInt(document.getElementById('adj_bars').value,10);
+    const nw = parseFloat(document.getElementById('adj_weight').value);
+    if(first && !isNaN(nb) && !isNaN(nw)){
+      first.bars = nb; first.weight = nw; first.status='ADJUSTED';
+      first.history.push({t:'Ajuste',m:'Barras → '+nb+' · Peso → '+nw+' kg',kind:'alerta',when});
+    }
+    showToast('Ajuste salvo','sliders');
+  }
+
+  selectedPiles.clear();
+  closeActionSheet();
+  renderEstoque();
+  renderMovimentar();
+}
+
+/* ============================================================
+   PÁGINA: DETALHE DO MONTE
+   ============================================================ */
+function openDetail(pileId){
+  currentDetailPile = PILES.find(p=>p.id===pileId);
+  if(!currentDetailPile) return;
+  const p = currentDetailPile;
+  const si = statusInfo(p.status);
+  const card = document.getElementById('det_card');
+  card.innerHTML = `
+    <div class="lot_head" style="cursor:default;">
+      <div class="left">
+        <span class="alloy_dot" style="background:${alloyColor(p.alloy)};width:18px;height:18px;"></span>
+        <div>
+          <div class="lot_name">${p.id} · ${alloyName(p.alloy)}</div>
+          <div class="lot_meta">Lote ${p.lot} · Posição L${p.position[0]}/C${p.position[1]}</div>
+        </div>
+      </div>
+      <div class="right"><span class="status_badge ${si.cls}">${si.label}</span></div>
+    </div>
+    <div class="lot_body" style="display:block;border-top:1px solid var(--apple_border);">
+      <div class="grid_kpi" style="margin-top:10px;">
+        <div class="kpi_card"><div class="kpi_label">Barras</div><div class="kpi_value">${p.bars}</div></div>
+        <div class="kpi_card"><div class="kpi_label">Peso</div><div class="kpi_value">${p.weight.toLocaleString('pt-BR')}<span class="kpi_unit"> kg</span></div></div>
+      </div>
+      ${p.sector?`<div class="small_muted" style="margin-top:10px;">Setor vinculado: <strong style="color:var(--apple_text)">${p.sector}</strong></div>`:''}
+    </div>
+  `;
+  const tl = document.getElementById('det_timeline');
+  tl.innerHTML = '';
+  [...p.history].reverse().forEach(h=>{
+    const it = document.createElement('div');
+    it.className = 'timeline_item';
+    it.innerHTML = `
+      <div class="dot ${h.kind}"></div>
+      <div class="body">
+        <div class="t">${h.t}</div>
+        <div class="m">${h.m||''} · ${h.when}</div>
+      </div>
+    `;
+    tl.appendChild(it);
+  });
+  navigate('detalhe');
+}
+
+/* ============================================================
+   PÁGINA: NOVA ENTRADA — grade 2D
+   ============================================================ */
+function renderPositionGrid(){
+  const grid = document.getElementById('position_grid');
+  grid.style.gridTemplateColumns = `24px repeat(${GRID_COLS}, 1fr)`;
+  grid.innerHTML = '';
+  // cabeçalho colunas
+  grid.appendChild(document.createElement('div'));
+  for(let c=1;c<=GRID_COLS;c++){
+    const lab = document.createElement('div');
+    lab.className = 'axis_labels'; lab.style.textAlign='center';
+    lab.textContent = 'C'+c;
+    grid.appendChild(lab);
+  }
+  const occupied = new Set(PILES.map(p=>p.position[0]+'-'+p.position[1]));
+  for(let r=1;r<=GRID_ROWS;r++){
+    const lab = document.createElement('div');
+    lab.className = 'axis_labels';
+    lab.style.display='flex';lab.style.alignItems='center';lab.style.justifyContent='center';
+    lab.textContent = 'L'+r;
+    grid.appendChild(lab);
+    for(let c=1;c<=GRID_COLS;c++){
+      const key = r+'-'+c;
+      const cell = document.createElement('div');
+      cell.className = 'position_cell';
+      if(occupied.has(key)){
+        cell.classList.add('occupied');
+        const pile = PILES.find(p=>p.position[0]===r && p.position[1]===c);
+        cell.innerHTML = pile? pile.id : '×';
+        if(pile){ const dot = document.createElement('span'); dot.className='alloy_dot'; dot.style.background=alloyColor(pile.alloy); cell.appendChild(dot);}
+      } else {
+        cell.textContent = 'L'+r+'/C'+c;
+        cell.onclick = ()=>{
+          document.querySelectorAll('.position_cell.selected').forEach(e=>e.classList.remove('selected'));
+          cell.classList.add('selected');
+          selectedPosition = [r,c];
+          document.getElementById('pos_selected_label').innerHTML = `Posição selecionada: <strong style="color:var(--apple_text)">Linha ${r}, Coluna ${c}</strong>`;
+        };
+      }
+      grid.appendChild(cell);
+    }
+  }
+}
+
+function simulateEntry(){
+  if(!selectedPosition){
+    showToast('Selecione uma posição livre na grade','alert-triangle');
+    return;
+  }
+  showToast('Entrada registrada (mock) · '+selectedPosition.join('/'),'package-plus');
+  selectedPosition = null;
+  document.getElementById('pos_selected_label').textContent = 'Nenhuma posição selecionada';
+  renderPositionGrid();
+}
+
+/* ============================================================
+   NAVEGAÇÃO
+   ============================================================ */
+function navigate(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+
+  document.querySelectorAll('.bottom_nav button').forEach(b=>b.classList.remove('active'));
+  const navBtn = document.querySelector(`.bottom_nav button[data-page="${page}"]`);
+  if(navBtn) navBtn.classList.add('active');
+
+  const titles = {
+    estoque:'Estoque de Chumbo',
+    movimentar:'Movimentação',
+    entrada:'Nova Entrada de Chumbo',
+    consumo:'Consumo na Teleira',
+    detalhe:'Detalhe do Monte',
+  };
+  document.getElementById('tb_title').textContent = titles[page] || '';
+  document.getElementById('tb_back_wrap').style.display = (page==='detalhe') ? 'inline-flex' : 'none';
+  document.querySelector('.fab').style.display = (page==='entrada') ? 'none' : 'flex';
+
+  const content = document.getElementById('content');
+  content.scrollTop = 0;
+
+  if(page==='estoque') renderEstoque();
+  if(page==='movimentar') renderMovimentar();
+  if(page==='entrada') renderPositionGrid();
+  lucide.createIcons();
+}
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+let toastTimer;
+function showToast(msg, icon){
+  const t = document.getElementById('toast');
+  document.getElementById('toast_msg').textContent = msg;
+  t.querySelector('i').setAttribute('data-lucide', icon || 'check-circle');
+  t.classList.add('show');
+  lucide.createIcons();
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 2400);
+}
+
+/* ============================================================
+   VIEWPORT TOGGLE
+   ============================================================ */
+document.querySelectorAll('.vp_buttons button').forEach(b=>{
+  b.onclick = ()=>{
+    document.querySelectorAll('.vp_buttons button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    const vp = b.dataset.vp;
+    const frame = document.getElementById('device_frame');
+    frame.classList.remove('is_mobile','is_tablet','is_desktop');
+    if(vp==='375'){ frame.classList.add('is_mobile'); frame.style.width='375px'; }
+    else if(vp==='390'){ frame.classList.add('is_mobile'); frame.style.width='390px'; }
+    else if(vp==='768'){ frame.classList.add('is_tablet'); frame.style.width='768px'; }
+    else { frame.classList.add('is_desktop'); frame.style.width='100%'; }
+  };
+});
+
+/* init */
+renderEstoque();
+renderMovimentar();
+lucide.createIcons();
+</script>
+</body>
+</html>
