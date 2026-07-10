@@ -1,0 +1,53 @@
+{% extends 'base/base.html' %}
+{% load base_tags %}
+
+{% block title %}Empaste — {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page_heading">
+    <div class="title">Empaste — Lote {{ paste.lot }}</div>
+    <div class="subtitle"><i data-lucide="layers" class="icon_16"></i> Empastadeira · {{ paste.paste_date|date:"d/m/Y" }}</div>
+</div>
+
+<div class="grid_kpi">
+    <div class="kpi_card"><div class="kpi_label">Modelo</div><div class="kpi_value" style="font-size:18px">{{ paste.grid_model|default:'—' }}</div></div>
+    <div class="kpi_card"><div class="kpi_label">Polaridade</div>
+        <div class="kpi_value" style="font-size:16px">
+            {% if paste.polarity == 'POS' %}<span class="polarity_chip polarity-chip-pos">Positiva</span>
+            {% else %}<span class="polarity_chip polarity-chip-neg">Negativa</span>{% endif %}
+        </div>
+    </div>
+    <div class="kpi_card"><div class="kpi_label">Lote</div><div class="kpi_value" style="font-size:22px">{{ paste.lot }}</div></div>
+    <div class="kpi_card"><div class="kpi_label">Quantidade empastada</div><div class="kpi_value">{{ paste.pasted_quantity|br_num }} <span class="kpi_unit">painéis</span></div></div>
+    <div class="kpi_card"><div class="kpi_label">Perda em painel</div><div class="kpi_value kpi_value--alerta">{{ paste.panel_loss|br_num }}</div></div>
+    <div class="kpi_card"><div class="kpi_label">Perda de grade</div><div class="kpi_value kpi_value--alerta">{{ paste.grid_loss|br_num }}</div></div>
+    <div class="kpi_card"><div class="kpi_label">Efetivo empastado</div><div class="kpi_value">{{ paste.effective_quantity|br_num }} <span class="kpi_unit">painéis</span></div></div>
+</div>
+
+<div class="table_wrapper">
+    <table class="factory_table">
+        <tbody>
+            <tr><th style="width:240px">Data</th><td>{{ paste.paste_date|date:"d/m/Y" }}</td></tr>
+            <tr><th>Modelo</th><td>{{ paste.grid_model|default:'—' }}</td></tr>
+            <tr><th>Polaridade</th><td>{{ paste.get_polarity_display }}</td></tr>
+            <tr><th>Lote</th><td><strong>{{ paste.lot }}</strong> <span style="color:var(--apple_text_secondary)">(automático a partir da data — RF-E02)</span></td></tr>
+            <tr><th>Quantidade empastada</th><td>{{ paste.pasted_quantity|br_num }} painéis</td></tr>
+            <tr><th>Perda em painel</th><td>{{ paste.panel_loss|br_num }}</td></tr>
+            <tr><th>Perda de grade</th><td>{{ paste.grid_loss|br_num }}</td></tr>
+            <tr><th>Quantidade efetiva</th><td>{{ paste.effective_quantity|br_num }} painéis</td></tr>
+            <tr><th>Criado em</th><td>{{ paste.created_at|date:"d/m/Y H:i" }}</td></tr>
+            <tr><th>Atualizado em</th><td>{{ paste.updated_at|date:"d/m/Y H:i" }}</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="btn_row">
+    <a href="{% url 'production:pasteproduction_list' %}" class="btn_apple btn_apple--ghost"><i data-lucide="arrow-left" class="icon_16"></i> Voltar à listagem</a>
+    {% if perms.production.change_pasteproduction %}
+    <a href="{% url 'production:pasteproduction_update' paste.pk %}" class="btn_apple"><i data-lucide="pencil" class="icon_16"></i> Editar</a>
+    {% endif %}
+    {% if perms.production.delete_pasteproduction %}
+    <a href="{% url 'production:pasteproduction_delete' paste.pk %}" class="btn_apple btn_apple--erro"><i data-lucide="trash-2" class="icon_16"></i> Excluir</a>
+    {% endif %}
+</div>
+{% endblock %}

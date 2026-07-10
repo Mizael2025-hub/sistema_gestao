@@ -12,25 +12,29 @@
         </div>
     </div>
     <div class="right">
-        {% if perms.production.add_gridproduction %}
-        <a href="{% url 'production:gridproduction_create' %}" class="btn_apple"><i data-lucide="plus" class="icon_16"></i> Novo apontamento</a>
+        {% if perms.production.add_pasteproduction %}
+        <a href="{% url 'production:pasteproduction_create' %}" class="btn_apple"><i data-lucide="plus" class="icon_16"></i> Novo empaste</a>
         {% endif %}
     </div>
 </div>
 
-{% if grid_productions %}
+{% if pastes %}
 <div class="grid_kpi">
     <div class="kpi_card">
         <div class="kpi_label">Registros exibidos</div>
-        <div class="kpi_value">{{ page_obj.paginator.count|default:grid_productions|length }}</div>
+        <div class="kpi_value">{{ page_obj.paginator.count|default:pastes|length }}</div>
     </div>
     <div class="kpi_card">
-        <div class="kpi_label">Total produzido (pág.)</div>
-        <div class="kpi_value">{{ total_quantity|default:'—'|br_num }} <span class="kpi_unit">grades</span></div>
+        <div class="kpi_label">Quantidade empastada (pág.)</div>
+        <div class="kpi_value">{{ total_pasted|br_num }} <span class="kpi_unit">painéis</span></div>
     </div>
     <div class="kpi_card">
-        <div class="kpi_label">Média p/ hora (média)</div>
-        <div class="kpi_value">{{ avg_per_hour|default:'—'|br_num:2 }} <span class="kpi_unit">grades/h</span></div>
+        <div class="kpi_label">Perda em painel (pág.)</div>
+        <div class="kpi_value kpi_value--alerta">{{ total_panel_loss|br_num }}</div>
+    </div>
+    <div class="kpi_card">
+        <div class="kpi_label">Perda de grade (pág.)</div>
+        <div class="kpi_value kpi_value--alerta">{{ total_grid_loss|br_num }}</div>
     </div>
 </div>
 {% endif %}
@@ -42,47 +46,43 @@
         <thead>
             <tr>
                 <th>Data</th>
-                <th>Operador</th>
-                <th>Máquina</th>
-                <th>Turno</th>
                 <th>Modelo</th>
                 <th>Polaridade</th>
                 <th>Lote</th>
-                <th>Quantidade</th>
-                <th>Méd./h</th>
+                <th>Quantidade empastada</th>
+                <th>Perda em painel</th>
+                <th>Perda de grade</th>
                 <th class="actions">Ações</th>
             </tr>
         </thead>
         <tbody>
-            {% for gp in grid_productions %}
-            <tr onclick="window.location.href='{% url 'production:gridproduction_detail' gp.pk %}'">
-                <td class="col-strong">{{ gp.production_date|date:"d/m/Y" }}</td>
-                <td>{{ gp.operator|default:'—' }}</td>
-                <td>{{ gp.machine|default:'—' }}</td>
-                <td>{{ gp.shift|default:'—' }}</td>
-                <td>{{ gp.grid_model|default:'—' }}</td>
+            {% for paste in pastes %}
+            <tr onclick="window.location.href='{% url 'production:pasteproduction_detail' paste.pk %}'">
+                <td class="col-strong">{{ paste.paste_date|date:"d/m/Y" }}</td>
+                <td>{{ paste.grid_model|default:'—' }}</td>
                 <td>
-                    {% if gp.polarity == 'POS' %}<span class="polarity_chip polarity-chip-pos">Positiva</span>
+                    {% if paste.polarity == 'POS' %}<span class="polarity_chip polarity-chip-pos">Positiva</span>
                     {% else %}<span class="polarity_chip polarity-chip-neg">Negativa</span>{% endif %}
                 </td>
-                <td><strong>{{ gp.lot }}</strong></td>
-                <td>{{ gp.quantity|br_num }}</td>
-                <td>{{ gp.production_per_hour|default:'—'|br_num:2 }}</td>
+                <td><strong>{{ paste.lot }}</strong></td>
+                <td>{{ paste.pasted_quantity|br_num }}</td>
+                <td>{{ paste.panel_loss|br_num }}</td>
+                <td>{{ paste.grid_loss|br_num }}</td>
                 <td class="actions" onclick="event.stopPropagation()">
                     <div class="cell_actions">
-                        <a href="{% url 'production:gridproduction_detail' gp.pk %}" class="btn_apple btn_apple--ghost btn_apple--sm" title="Detalhe"><i data-lucide="eye" class="icon_16"></i></a>
-                        {% if perms.production.change_gridproduction %}
-                        <a href="{% url 'production:gridproduction_update' gp.pk %}" class="btn_apple btn_apple--ghost btn_apple--sm" title="Editar"><i data-lucide="pencil" class="icon_16"></i></a>
+                        <a href="{% url 'production:pasteproduction_detail' paste.pk %}" class="btn_apple btn_apple--ghost btn_apple--sm" title="Detalhe"><i data-lucide="eye" class="icon_16"></i></a>
+                        {% if perms.production.change_pasteproduction %}
+                        <a href="{% url 'production:pasteproduction_update' paste.pk %}" class="btn_apple btn_apple--ghost btn_apple--sm" title="Editar"><i data-lucide="pencil" class="icon_16"></i></a>
                         {% endif %}
                     </div>
                 </td>
             </tr>
             {% empty %}
-            <tr><td colspan="10">
+            <tr><td colspan="8">
                 <div class="empty_hint">
-                    <i data-lucide="activity"></i>
-                    <div class="t">Nenhum apontamento encontrado</div>
-                    <div class="s">Registre uma produção de grade ou ajuste os filtros.</div>
+                    <i data-lucide="layers"></i>
+                    <div class="t">Nenhum empaste registrado</div>
+                    <div class="s">Registre um empaste ou ajuste os filtros.</div>
                 </div>
             </td></tr>
             {% endfor %}
@@ -108,7 +108,7 @@
         {% endif %}
     </div>
     {% else %}
-    <span class="count_muted">{{ grid_productions|length }} registro(s)</span>
+    <span class="count_muted">{{ pastes|length }} registro(s)</span>
     <div></div>
     {% endif %}
 </div>

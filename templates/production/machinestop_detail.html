@@ -1,4 +1,5 @@
 {% extends 'base/base.html' %}
+{% load base_tags %}
 
 {% block title %}{{ page_title }} — {{ app_name }}{% endblock %}
 
@@ -21,7 +22,7 @@
             <tr><th style="width:240px">Apontamento vinculado</th><td><a href="{% url 'production:gridproduction_detail' gp.pk %}">{{ gp }} <i data-lucide="external-link" class="icon_16"></i></a></td></tr>
             <tr><th>Hora que parou</th><td>{{ stop.stop_start|date:"d/m/Y H:i" }}</td></tr>
             <tr><th>Hora que voltou</th><td>{{ stop.stop_end|date:"d/m/Y H:i" }}</td></tr>
-            <tr><th>Duração</th><td>{{ stop.duration_label }} ({{ stop.duration_hours }} h)</td></tr>
+            <tr><th>Duração</th><td>{{ stop.duration_label }} ({{ stop.duration_hours|br_num:2 }} h)</td></tr>
             <tr><th>Motivo(s)</th><td>
                 {% for r in stop.reasons.all %}
                     <span class="status_badge alerta" style="margin-right:6px">{{ r }}</span>

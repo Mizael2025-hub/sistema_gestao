@@ -16,7 +16,7 @@ from django import forms
 
 from catalogs.models import GridModel, Machine, Polarity, Shift, StopReason
 from operators.models import Operator
-from production.models import GridProduction, MachineStop
+from production.models import GridProduction, MachineStop, PasteProduction
 
 
 class GridProductionForm(forms.ModelForm):
@@ -115,14 +115,18 @@ class GridProductionFilterForm(forms.Form):
 class GridProductionLocateForm(forms.Form):
     '''
     Localiza o registro de produção por data, operador e máquina (RF-P01).
+
+    Todos os campos são opcionais — a busca aplica apenas os critérios
+    preenchidos, permitindo filtrar por qualquer combinação (ex.: só data,
+    só operador, data+operador, etc.).
     '''
 
-    production_date = forms.DateField(label='Data', required=True)
+    production_date = forms.DateField(label='Data', required=False)
     operator = forms.ModelChoiceField(
-        queryset=Operator.objects.all(), label='Operador', required=True,
+        queryset=Operator.objects.all(), label='Operador', required=False,
     )
     machine = forms.ModelChoiceField(
-        queryset=Machine.objects.all(), label='Máquina', required=True,
+        queryset=Machine.objects.all(), label='Máquina', required=False,
     )
 
     def __init__(self, *args, **kwargs):
@@ -138,11 +142,16 @@ class GridProductionLocateForm(forms.Form):
         if not self.is_valid():
             return GridProduction.objects.none()
         cd = self.cleaned_data
-        return GridProduction.objects.filter(
-            production_date=cd['production_date'],
-            operator=cd['operator'],
-            machine=cd['machine'],
-        ).select_related('operator', 'machine', 'shift', 'grid_model').order_by('-start_time')
+        qs = GridProduction.objects.all()
+        if cd.get('production_date'):
+            qs = qs.filter(production_date=cd['production_date'])
+        if cd.get('operator'):
+            qs = qs.filter(operator=cd['operator'])
+        if cd.get('machine'):
+            qs = qs.filter(machine=cd['machine'])
+        return qs.select_related(
+            'operator', 'machine', 'shift', 'grid_model',
+        ).order_by('-production_date', '-start_time')
 
 
 class MachineStopForm(forms.ModelForm):
@@ -175,12 +184,14 @@ class MachineStopForm(forms.ModelForm):
             self.instance.grid_production = self.grid_production
         for f in self.fields.values():
             f.widget.attrs.setdefault('class', 'industrial_input')
-        self.fields['stop_start'].widget = forms.DateTimeInput(attrs={
-            'type': 'datetime-local', 'class': 'industrial_input',
-        })
-        self.fields['stop_end'].widget = forms.DateTimeInput(attrs={
-            'type': 'datetime-local', 'class': 'industrial_input',
-        })
+        self.fields['stop_start'].widget = forms.DateTimeInput(
+            attrs={'type': 'datetime-local', 'class': 'industrial_input'},
+            format='%Y-%m-%dT%H:%M',
+        )
+        self.fields['stop_end'].widget = forms.DateTimeInput(
+            attrs={'type': 'datetime-local', 'class': 'industrial_input'},
+            format='%Y-%m-%dT%H:%M',
+        )
         self.fields['stop_start'].input_formats = ['%Y-%m-%dT%H:%M']
         self.fields['stop_end'].input_formats = ['%Y-%m-%dT%H:%M']
         self.fields['reasons'].queryset = StopReason.objects.filter(is_active=True)
@@ -246,3 +257,88 @@ class MachineStopFilterForm(forms.Form):
         if cd.get('grid_model'):
             qs = qs.filter(grid_production__grid_model=cd['grid_model'])
         return qs.distinct()
+
+
+# --------------------------------------------------------------------- #
+# Sprint 5 — Empaste e consumos (RF-E01..E04)
+# --------------------------------------------------------------------- #
+class PasteProductionForm(forms.ModelForm):
+    '''
+    Registra/edita um empaste (RF-E01).
+
+    O lote é gerado automaticamente a partir da data (`EP{DDMMYYYY}`) e
+    NÃO é editável manualmente (RF-E02) — exibido como readonly.
+
+    O widget de data usa `type=date` com format ISO (YYYY-MM-DD) para que o
+    navegador exiba corretamente o valor ao editar (input type=date exige
+    ISO); o envio é convertido por Django via DATE_INPUT_FORMATS.
+    '''
+
+    class Meta:
+        model = PasteProduction
+        fields = ['paste_date', 'grid_model', 'polarity', 'pasted_quantity', 'panel_loss', 'grid_loss']
+        labels = {
+            'paste_date': 'Data',
+            'grid_model': 'Modelo',
+            'polarity': 'Polaridade',
+            'pasted_quantity': 'Quantidade empastada',
+            'panel_loss': 'Perda em painel',
+            'grid_loss': 'Perda de grade',
+        }
+        help_texts = {
+            'panel_loss': 'Painéis perdidos (opcional).',
+            'grid_loss': 'Grades perdidas (opcional).',
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for f in self.fields.values():
+            f.widget.attrs.setdefault('class', 'industrial_input')
+        # type=date exige valor no formato ISO (YYYY-MM-DD); sem format
+        # explícito o Django renderizaria no formato do locale (dd/mm/aaaa)
+        # e o navegador exibiria o campo em branco ao editar.
+        self.fields['paste_date'].widget = forms.DateInput(
+            attrs={'type': 'date', 'class': 'industrial_input'},
+            format='%Y-%m-%d',
+        )
+        self.fields['paste_date'].input_formats = ['%Y-%m-%d', '%d/%m/%Y']
+
+    def clean(self):
+        cleaned = super().clean()
+        if not cleaned.get('paste_date'):
+            raise forms.ValidationError({'paste_date': 'Informe a data do empaste.'})
+        return cleaned
+
+
+class PasteProductionFilterForm(forms.Form):
+    '''Filtros da listagem de empastes (RF-E04).'''
+
+    paste_date = forms.DateField(label='Data', required=False)
+    grid_model = forms.ModelChoiceField(queryset=GridModel.objects.all(), label='Modelo', required=False)
+    polarity = forms.ChoiceField(
+        choices=[('', '------')] + Polarity.choices, label='Polaridade', required=False,
+    )
+    lot = forms.CharField(label='Lote', required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for f in self.fields.values():
+            f.widget.attrs.setdefault('class', 'industrial_input')
+        self.fields['paste_date'].widget = forms.DateInput(attrs={
+            'type': 'date', 'class': 'industrial_input',
+        })
+
+    def filter_queryset(self, qs):
+        cd = self.cleaned_data
+        if not cd:
+            return qs
+        if cd.get('paste_date'):
+            qs = qs.filter(paste_date__exact=cd['paste_date'])
+        if cd.get('grid_model'):
+            qs = qs.filter(grid_model=cd['grid_model'])
+        if cd.get('polarity'):
+            qs = qs.filter(polarity=cd['polarity'])
+        lot = cd.get('lot', '').strip()
+        if lot:
+            qs = qs.filter(lot__icontains=lot)
+        return qs

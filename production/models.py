@@ -3,6 +3,7 @@ App production — apontamentos de produção.
 
 Sprint 3: Teleiras — produção de grade (RF-T01..T04).
 Sprint 4: Paradas de máquina (RF-P01..P04).
+Sprint 5: Empaste e consumos (RF-E01..E04).
 
 GridProduction com:
 - data, operador, máquina, turno, modelo, polaridade, lote (3 dígitos),
@@ -16,6 +17,15 @@ MachineStop:
 - reasons: M2M para StopReason (RF-P02 — múltiplos motivos).
 - note: observação opcional.
 - Calcula stop_hours e impacta production_per_hour (RF-P03).
+
+PasteProduction (empaste — RF-E01..E04):
+- data, modelo, polaridade, lote (auto EP{DDMMYYYY}), quantidade empastada,
+  perda em painel, perda de grade.
+- Lote gerado automaticamente a partir da data, não editável manualmente
+  (RF-E02).
+
+OxideConsumption (RF-E03):
+- peso de óxido consumido por empaste (quando aplicável).
 '''
 
 from django.core.exceptions import ValidationError
@@ -237,3 +247,125 @@ class MachineStop(TimestampedModel):
     def reasons_display(self):
         '''Lista os motivos separados por vírgula.'''
         return ', '.join(str(r) for r in self.reasons.all()) or '—'
+
+
+# --------------------------------------------------------------------- #
+# Sprint 5 — Empaste e consumos (RF-E01..E04)
+# --------------------------------------------------------------------- #
+class PasteProduction(TimestampedModel):
+    '''
+    Apontamento de empaste na empastadeira (UI "Empaste").
+
+    RF-E01: data, modelo, polaridade, lote (auto `EP{DDMMYYYY}`),
+    quantidade empastada, perda em painel, perda de grade.
+    RF-E02: lote gerado automaticamente a partir da data, não editável
+    manualmente.
+    '''
+
+    paste_date = models.DateField(_('data'), db_index=True)
+    grid_model = models.ForeignKey(
+        GridModel, on_delete=models.PROTECT, related_name='paste_productions',
+        verbose_name=_('modelo'),
+    )
+    polarity = models.CharField(
+        _('polaridade'), max_length=3, choices=Polarity.choices,
+    )
+    lot = models.CharField(
+        _('lote'), max_length=12,
+        help_text=_('Lote automático no formato EP{DDMMYYYY}. Não editável manualmente (RF-E02).'),
+    )
+    pasted_quantity = models.PositiveIntegerField(_('quantidade empastada'))
+    panel_loss = models.PositiveIntegerField(_('perda em painel'), default=0)
+    grid_loss = models.PositiveIntegerField(_('perda de grade'), default=0)
+
+    class Meta:
+        verbose_name = _('empaste')
+        verbose_name_plural = _('empastes')
+        ordering = ('-paste_date', '-id')
+        indexes = [
+            models.Index(fields=('paste_date',)),
+            models.Index(fields=('lot',)),
+            models.Index(fields=('polarity',)),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(pasted_quantity__gt=0),
+                name='paste_prod_pasted_quantity_positive',
+            ),
+        ]
+
+    def __str__(self):
+        return '%s · %s · %s (%s)' % (
+            self.paste_date.strftime('%d/%m/%Y'),
+            self.grid_model.name, self.get_polarity_display(), self.lot,
+        )
+
+    # ---- Lote automático EP{DDMMYYYY} (RF-E02) ------------------------
+    @classmethod
+    def compute_lot(cls, paste_date):
+        '''
+        Lote do empaste derivado da data: `EP` + DD + MM + AAAA.
+        Ex.: empaste em 10/07/2026 -> EP10072026.
+        '''
+        if not paste_date:
+            return ''
+        return 'EP%s' % paste_date.strftime('%d%m%Y')
+
+    def clean(self):
+        super().clean()
+        if self.paste_date and self.lot:
+            expected = self.compute_lot(self.paste_date)
+            if self.lot != expected:
+                raise ValidationError({
+                    'lot': _('O lote deve ser gerado automaticamente a partir da data (%s).' % expected),
+                })
+
+    def save(self, *args, **kwargs):
+        # O lote é sempre derivado da data (RF-E02) — nunca editável manualmente.
+        if self.paste_date:
+            self.lot = self.compute_lot(self.paste_date)
+        super().save(*args, **kwargs)
+
+    # ---- Métricas ------------------------------------------------------
+    @property
+    def effective_quantity(self):
+        '''Quantidade efetiva empastada (quantidade − perda em painel).'''
+        return max(self.pasted_quantity - self.panel_loss, 0)
+
+    @property
+    def oxide_weight(self):
+        '''Peso de óxido consumido (FK OxideConsumption), ou 0 quando ausente.'''
+        try:
+            return self.oxide_consumption.weight or 0
+        except OxideConsumption.DoesNotExist:
+            return 0
+
+
+class OxideConsumption(TimestampedModel):
+    '''
+    Consumo de óxido pelo empaste (RF-E03).
+
+    Peso de óxido consumido por empaste, quando aplicável (opcional).
+    '''
+
+    paste_production = models.OneToOneField(
+        PasteProduction, on_delete=models.CASCADE,
+        related_name='oxide_consumption', verbose_name=_('empaste'),
+    )
+    weight = models.DecimalField(
+        _('peso consumido (kg)'), max_digits=10, decimal_places=2,
+    )
+
+    class Meta:
+        verbose_name = _('consumo de óxido')
+        verbose_name_plural = _('consumos de óxido')
+        ordering = ('-id',)
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(weight__gt=0),
+                name='oxide_consumption_weight_positive',
+            ),
+        ]
+
+    def __str__(self):
+        return '%s kg · %s' % (self.weight, self.paste_production)

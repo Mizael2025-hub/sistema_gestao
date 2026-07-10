@@ -1,0 +1,61 @@
+{% extends 'base/base.html' %}
+{% load base_tags %}
+
+{% block title %}{{ page_title }} — {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page_heading">
+    <div class="title">{{ page_title }}</div>
+    <div class="subtitle">{{ page_subtitle }}</div>
+</div>
+
+<div class="factory_alert factory_alert--info">
+    <div class="pulse_dot" style="background: var(--status_info);"></div>
+    <span><strong>RF-E02:</strong> o lote do empaste é gerado automaticamente a partir da data no formato <strong>EP{DDMMYYYY}</strong> (ex.: 10/07/2026 → EP10072026) e não é editável manualmente.</span>
+</div>
+
+<form method="post" class="form_box">
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="login_errors">{{ form.non_field_errors }}</div>{% endif %}
+
+    <div class="form_grid">
+        <div class="input_group">
+            <label class="input_label" for="id_paste_date">Data</label>
+            {{ form.paste_date|add_class:"industrial_input" }}
+            {% if form.paste_date.errors %}<ul class="field_errors">{% for e in form.paste_date.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+        <div class="input_group">
+            <label class="input_label" for="id_grid_model">Modelo</label>
+            {{ form.grid_model|add_class:"industrial_input" }}
+        </div>
+        <div class="input_group">
+            <label class="input_label" for="id_polarity">Polaridade</label>
+            {{ form.polarity|add_class:"industrial_input" }}
+        </div>
+        <div class="input_group">
+            <label class="input_label" for="id_pasted_quantity">Quantidade empastada</label>
+            {{ form.pasted_quantity|add_class:"industrial_input" }}
+        </div>
+        <div class="input_group">
+            <label class="input_label" for="id_panel_loss">Perda em painel</label>
+            {{ form.panel_loss|add_class:"industrial_input" }}
+            {% if form.panel_loss.help_text %}<span class="help_text">{{ form.panel_loss.help_text }}</span>{% endif %}
+        </div>
+        <div class="input_group">
+            <label class="input_label" for="id_grid_loss">Perda de grade</label>
+            {{ form.grid_loss|add_class:"industrial_input" }}
+            {% if form.grid_loss.help_text %}<span class="help_text">{{ form.grid_loss.help_text }}</span>{% endif %}
+        </div>
+        <div class="input_group">
+            <label class="input_label">Lote (auto)</label>
+            <input type="text" class="industrial_input" value="{{ form.instance.lot|default:'Gerado ao salvar a partir da data' }}" readonly>
+            <span class="help_text">Lote automático EP{DDMMYYYY} (não editável manualmente).</span>
+        </div>
+    </div>
+
+    <div class="btn_row">
+        <button type="submit" class="btn_apple"><i data-lucide="save" class="icon_16"></i> Salvar empaste</button>
+        <a href="{% url 'production:pasteproduction_list' %}" class="btn_apple btn_apple--ghost"><i data-lucide="x" class="icon_16"></i> Cancelar</a>
+    </div>
+</form>
+{% endblock %}

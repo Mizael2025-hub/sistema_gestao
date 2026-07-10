@@ -39,6 +39,51 @@ def placeholder(field, text):
     return field
 
 
+@register.filter(name='br_num')
+def br_num(value, decimal_places=None):
+    '''
+    Formata número no padrão pt-BR: separador de milhar '.' e decimal ','.
+
+    Uso: {{ valor|br_num }}              -> 1.234
+         {{ valor|br_num:2 }}            -> 1.234,56
+         {{ valor|default:'-'|br_num }}  -> respeita default quando vazio/zero
+
+    Ex.: 1234567.89 -> 1.234.567,89 ; 1234 -> 1.234 ; 0 -> 0.
+    Não localiza via Django L10N — monta a string explicitamente para
+    garantir o formato pt-BR independentemente do locale ativo.
+    '''
+    if value is None or value == '':
+        return value
+    from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+    try:
+        num = Decimal(str(value))
+    except (InvalidOperation, ValueError, TypeError):
+        return value
+    if decimal_places is not None:
+        quantizer = Decimal(1).scaleb(-int(decimal_places))
+        num = num.quantize(quantizer, rounding=ROUND_HALF_UP)
+    sign, digits, exp = num.as_tuple()
+    s = format(num, 'f')
+    neg = s.startswith('-')
+    if neg:
+        s = s[1:]
+    if '.' in s:
+        int_part, frac_part = s.split('.', 1)
+    else:
+        int_part, frac_part = s, ''
+    groups = []
+    while len(int_part) > 3:
+        groups.insert(0, int_part[-3:])
+        int_part = int_part[:-3]
+    groups.insert(0, int_part)
+    out = '.'.join(groups)
+    if frac_part != '':
+        out += ',' + frac_part
+    if neg:
+        out = '-' + out
+    return out
+
+
 @register.simple_tag
 def cell_value(obj, field_name):
     '''Renderiza amigavelmente o valor de um atributo de um model.'''

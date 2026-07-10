@@ -1,4 +1,4 @@
-'''URLs do app production — Sprint 3 (Teleiras) + Sprint 4 (Paradas).'''
+'''URLs do app production — Sprint 3 (Teleiras) + Sprint 4 (Paradas) + Sprint 5 (Empaste).'''
 from django.urls import path
 
 from production import views
@@ -19,4 +19,11 @@ urlpatterns = [
     path('paradas/<int:pk>/', views.MachineStopDetailView.as_view(), name='machinestop_detail'),
     path('paradas/<int:pk>/editar/', views.MachineStopUpdateView.as_view(), name='machinestop_update'),
     path('paradas/<int:pk>/excluir/', views.MachineStopDeleteView.as_view(), name='machinestop_delete'),
+
+    # Sprint 5 — Empaste e consumos (RF-E01..E04)
+    path('empaste/', views.PasteProductionListView.as_view(), name='pasteproduction_list'),
+    path('empaste/novo/', views.PasteProductionCreateView.as_view(), name='pasteproduction_create'),
+    path('empaste/<int:pk>/', views.PasteProductionDetailView.as_view(), name='pasteproduction_detail'),
+    path('empaste/<int:pk>/editar/', views.PasteProductionUpdateView.as_view(), name='pasteproduction_update'),
+    path('empaste/<int:pk>/excluir/', views.PasteProductionDeleteView.as_view(), name='pasteproduction_delete'),
 ]

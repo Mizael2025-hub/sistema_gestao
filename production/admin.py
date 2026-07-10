@@ -3,11 +3,12 @@ Admin do app production.
 
 Sprint 3: GridProduction.
 Sprint 4: MachineStop (paradas de máquina) + inline no GridProduction.
+Sprint 5: PasteProduction (empaste) + inline de OxideConsumption.
 '''
 
 from django.contrib import admin
 
-from production.models import GridProduction, MachineStop
+from production.models import GridProduction, MachineStop, OxideConsumption, PasteProduction
 
 
 class MachineStopInline(admin.TabularInline):
@@ -54,3 +55,31 @@ class MachineStopAdmin(admin.ModelAdmin):
     def reasons_display(self, obj):
         return obj.reasons_display
     reasons_display.short_description = 'Motivo(s)'
+
+
+class OxideConsumptionInline(admin.StackedInline):
+    model = OxideConsumption
+    extra = 0
+    max_num = 1
+    verbose_name = 'consumo de óxido'
+    verbose_name_plural = 'consumo de óxido'
+
+
+@admin.register(PasteProduction)
+class PasteProductionAdmin(admin.ModelAdmin):
+    list_display = (
+        'paste_date', 'grid_model', 'polarity', 'lot', 'pasted_quantity',
+        'panel_loss', 'grid_loss', 'effective_quantity', 'oxide_weight',
+        'created_at',
+    )
+    list_filter = ('paste_date', 'grid_model', 'polarity')
+    search_fields = ('lot', 'grid_model__name')
+    readonly_fields = ('lot', 'effective_quantity', 'oxide_weight', 'created_at', 'updated_at')
+    list_select_related = ('grid_model', 'oxide_consumption')
+    date_hierarchy = 'paste_date'
+    ordering = ('-paste_date', '-id')
+    inlines = [OxideConsumptionInline]
+
+    def oxide_weight(self, obj):
+        return obj.oxide_weight
+    oxide_weight.short_description = 'Óxido (kg)'

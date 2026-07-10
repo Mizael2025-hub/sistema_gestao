@@ -21,7 +21,7 @@
 {% if stops %}
 <div class="grid_kpi">
     <div class="kpi_card"><div class="kpi_label">Paradas (nesta página)</div><div class="kpi_value">{{ stops_count }}</div></div>
-    <div class="kpi_card"><div class="kpi_label">Tempo parado (pág.)</div><div class="kpi_value kpi_value--alerta">{{ total_stop_hours }} <span class="kpi_unit">h</span></div></div>
+    <div class="kpi_card"><div class="kpi_label">Tempo parado (pág.)</div><div class="kpi_value kpi_value--alerta">{{ total_stop_hours|br_num:2 }} <span class="kpi_unit">h</span></div></div>
 </div>
 {% endif %}
 

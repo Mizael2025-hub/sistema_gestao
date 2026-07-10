@@ -3,6 +3,7 @@ Views do app production.
 
 Sprint 3: Teleiras — produção de grade (RF-T01..T04).
 Sprint 4: Paradas de máquina (RF-P01..P04).
+Sprint 5: Empaste e consumos (RF-E01..E04).
 
 Fluxo de parada (RF-P01):
 1. Localizar a produção por data/operador/máquina (/producao/paradas/localizar/).
@@ -22,8 +23,9 @@ from base.view_mixins import FilteredListMixin, PageContextMixin
 from production.forms import (
     GridProductionFilterForm, GridProductionForm,
     GridProductionLocateForm, MachineStopFilterForm, MachineStopForm,
+    PasteProductionFilterForm, PasteProductionForm,
 )
-from production.models import GridProduction, MachineStop
+from production.models import GridProduction, MachineStop, PasteProduction
 
 
 # --------------------------------------------------------------------- #
@@ -258,3 +260,89 @@ class MachineStopDeleteView(LoginRequiredMixin, PermissionRequiredMixin, PageCon
 
     def get_success_url(self):
         return reverse_lazy('production:machinestop_list')
+
+
+# --------------------------------------------------------------------- #
+# Sprint 5 — Empaste e consumos (RF-E01..E04)
+# --------------------------------------------------------------------- #
+class PasteProductionListView(LoginRequiredMixin, FilteredListMixin, PageContextMixin, ListView):
+    '''Listagem de empastes com filtros (RF-E04).'''
+
+    model = PasteProduction
+    template_name = 'production/pasteproduction_list.html'
+    context_object_name = 'pastes'
+    paginate_by = 25
+    filter_form_class = PasteProductionFilterForm
+
+    page_title = 'Empaste'
+    page_subtitle = 'Apontamentos da empastadeira'
+    page_icon = 'layers'
+
+    def get_queryset(self):
+        qs = super().get_queryset().select_related(
+            'grid_model', 'oxide_consumption',
+        ).order_by('-paste_date', '-id')
+        return qs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        page = ctx.get('page_obj')
+        objs = list(page.object_list) if page else list(ctx.get('pastes', []))
+        if objs:
+            ctx['total_pasted'] = sum(o.pasted_quantity for o in objs)
+            ctx['total_panel_loss'] = sum(o.panel_loss for o in objs)
+            ctx['total_grid_loss'] = sum(o.grid_loss for o in objs)
+        else:
+            ctx['total_pasted'] = 0
+            ctx['total_panel_loss'] = 0
+            ctx['total_grid_loss'] = 0
+        return ctx
+
+
+class PasteProductionDetailView(LoginRequiredMixin, PageContextMixin, DetailView):
+    model = PasteProduction
+    template_name = 'production/pasteproduction_detail.html'
+    context_object_name = 'paste'
+
+    page_title = 'Detalhe do empaste'
+    page_subtitle = 'Ficha do empaste'
+    page_icon = 'layers'
+
+
+class PasteProductionCreateView(LoginRequiredMixin, PermissionRequiredMixin, PageContextMixin, CreateView):
+    model = PasteProduction
+    form_class = PasteProductionForm
+    template_name = 'production/pasteproduction_form.html'
+    success_url = reverse_lazy('production:pasteproduction_list')
+    permission_required = 'production.add_pasteproduction'
+
+    page_title = 'Novo empaste'
+    page_subtitle = 'Registre o empaste da empastadeira'
+    page_icon = 'layers'
+
+
+class PasteProductionUpdateView(LoginRequiredMixin, PermissionRequiredMixin, PageContextMixin, UpdateView):
+    model = PasteProduction
+    form_class = PasteProductionForm
+    template_name = 'production/pasteproduction_form.html'
+    permission_required = 'production.change_pasteproduction'
+
+    page_title = 'Editar empaste'
+    page_subtitle = 'Altere os dados do empaste'
+    page_icon = 'layers'
+
+    def get_success_url(self):
+        return reverse_lazy('production:pasteproduction_detail', kwargs={'pk': self.object.pk})
+
+
+class PasteProductionDeleteView(LoginRequiredMixin, PermissionRequiredMixin, PageContextMixin, DeleteView):
+    model = PasteProduction
+    template_name = 'production/pasteproduction_confirm_delete.html'
+    permission_required = 'production.delete_pasteproduction'
+
+    page_title = 'Excluir empaste'
+    page_subtitle = 'Confirme a exclusão'
+    page_icon = 'trash-2'
+
+    def get_success_url(self):
+        return reverse_lazy('production:pasteproduction_list')

@@ -21,8 +21,8 @@
         </div>
     </div>
     <div class="kpi_card"><div class="kpi_label">Lote</div><div class="kpi_value" style="font-size:22px">{{ gp.lot }}</div></div>
-    <div class="kpi_card"><div class="kpi_label">Quantidade</div><div class="kpi_value">{{ gp.quantity }} <span class="kpi_unit">grades</span></div></div>
-    <div class="kpi_card"><div class="kpi_label">Média p/ hora</div><div class="kpi_value">{{ gp.production_per_hour }} <span class="kpi_unit">grades/h</span></div></div>
+    <div class="kpi_card"><div class="kpi_label">Quantidade</div><div class="kpi_value">{{ gp.quantity|br_num }} <span class="kpi_unit">grades</span></div></div>
+    <div class="kpi_card"><div class="kpi_label">Média p/ hora</div><div class="kpi_value">{{ gp.production_per_hour|br_num:2 }} <span class="kpi_unit">grades/h</span></div></div>
 </div>
 
 <div class="table_wrapper">
@@ -31,9 +31,9 @@
             <tr><th style="width:240px">Data</th><td>{{ gp.production_date|date:"d/m/Y" }}</td></tr>
             <tr><th>Hora início</th><td>{{ gp.start_time|date:"H:i" }}</td></tr>
             <tr><th>Hora fim</th><td>{{ gp.end_time|date:"H:i" }}</td></tr>
-            <tr><th>Horas trabalhadas</th><td>{{ gp.duration_hours|floatformat:2 }} h</td></tr>
-            <tr><th>Horas paradas</th><td>{{ gp.stop_hours|floatformat:2 }} h</td></tr>
-            <tr><th>Horas líquidas</th><td>{{ gp.effective_hours|floatformat:2 }} h</td></tr>
+            <tr><th>Horas trabalhadas</th><td>{{ gp.duration_hours|br_num:2 }} h</td></tr>
+            <tr><th>Horas paradas</th><td>{{ gp.stop_hours|br_num:2 }} h</td></tr>
+            <tr><th>Horas líquidas</th><td>{{ gp.effective_hours|br_num:2 }} h</td></tr>
             <tr><th>Criado em</th><td>{{ gp.created_at|date:"d/m/Y H:i" }}</td></tr>
             <tr><th>Atualizado em</th><td>{{ gp.updated_at|date:"d/m/Y H:i" }}</td></tr>
         </tbody>

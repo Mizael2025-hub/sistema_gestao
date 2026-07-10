@@ -6,7 +6,7 @@ controle e gestão da produção de baterias de chumbo-ácido para motocicletas.
 > Documentação completa do produto: [`PRD.md`](PRD.md)
 > Referência visual: [`@design_system/design-system.html`](@design_system/design-system.html)
 
-## Status atual (Sprints 1 a 3)
+## Status atual (Sprints 1 a 5)
 
 - **Sprint 1 — Fundação:** infra, settings (django-environ, pt-br, America/Sao_Paulo),
   login por email, templates base aderentes ao design system, healthcheck.
@@ -15,6 +15,13 @@ controle e gestão da produção de baterias de chumbo-ácido para motocicletas.
   e ligas; admin completo.
 - **Sprint 3 — Teleiras:** apontamentos de produção de grade com lote automático
   (001–999), filtros, permissões e média de produção por hora.
+- **Sprint 4 — Paradas de máquina:** localização de apontamento por
+  data/operador/máquina (campos opcionais), registro de parada com motivos
+  múltiplos (M2M), impacto na média de produção por hora, listagem e filtros.
+- **Sprint 5 — Empaste e consumos:** apontamento de empaste com lote automático
+  (`EP{DDMMYYYY}`, não editável), filtros por data/modelo/polaridade/lote,
+  model `OxideConsumption` (admin), e formatação pt-BR de números em todo o
+  sistema (filtro `br_num`).
 
 As tarefas concluídas estão marcadas com `[X]` na seção *12. Sprints de
 implementação* do `PRD.md`.
@@ -50,6 +57,8 @@ Acesse:
 - Operadores: http://localhost:8000/operadores/
 - Cadastros-base: http://localhost:8000/cadastros/
 - Teleiras: http://localhost:8000/producao/teleiras/
+- Paradas de máquina: http://localhost:8000/producao/paradas/
+- Empaste: http://localhost:8000/producao/empaste/
 - Django Admin: http://localhost:8000/admin/
 
 ### Login de teste
@@ -71,6 +80,8 @@ por partes:
 | `v1.0.0-sprint1` | Sprint 1 — Fundação do projeto      |
 | `v1.0.0-sprint2` | Sprint 2 — Cadastros-base           |
 | `v1.0.0-sprint3` | Sprint 3 — Teleiras (apontamentos)  |
+| `v1.0.0-sprint4` | Sprint 4 — Paradas de máquina       |
+| `v1.0.0-sprint5` | Sprint 5 — Empaste e consumos       |
 
 Para visualizar o estado de uma sprint específica:
 

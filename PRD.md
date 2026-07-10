@@ -758,10 +758,10 @@ find /backups -name "*.tar.gz" -mtime +30 -delete
 
 ### Sprint 5 — Empaste e consumos
 
-- [ ] Model `PasteProduction` (lote auto `EP{DDMMYYYY}`).
-- [ ] Model `OxideConsumption`.
-- [ ] Validação de lote não editável.
-- [ ] Filtros por data/modelo/polaridade/lote.
+- [X] Model `PasteProduction` (lote auto `EP{DDMMYYYY}`).
+- [X] Model `OxideConsumption`.
+- [X] Validação de lote não editável.
+- [X] Filtros por data/modelo/polaridade/lote.
 
 ### Sprint 6 — Masseira, Montagem, Formação
 
