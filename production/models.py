@@ -4,6 +4,7 @@ App production — apontamentos de produção.
 Sprint 3: Teleiras — produção de grade (RF-T01..T04).
 Sprint 4: Paradas de máquina (RF-P01..P04).
 Sprint 5: Empaste e consumos (RF-E01..E04).
+Sprint 6: Masseira, Montagem e Formação (RF-M01, RF-MO01, RF-F01/F02).
 
 GridProduction com:
 - data, operador, máquina, turno, modelo, polaridade, lote (3 dígitos),
@@ -26,6 +27,19 @@ PasteProduction (empaste — RF-E01..E04):
 
 OxideConsumption (RF-E03):
 - peso de óxido consumido por empaste (quando aplicável).
+
+MassProduction (masseira — RF-M01):
+- data, lote do chumbo, peso, polaridade, peso descartado, sobra de massa,
+  excesso de óxido, excesso de massa pronta, peso do aditivo.
+  Observação: o lote do chumbo é guardado como CharField (informativo) por
+  enquanto; Sprint 7 criará `LeadLot` e este campo passará a ser FK.
+
+Assembly (montagem — RF-MO01):
+- data, modelo, lote, quantidade, EP positiva, EP negativa, observação.
+
+Formation (formação — RF-F01):
+- data, número da mesa, lote da bateria, modelo da bateria, quantidade.
+- Importação por planilha (RF-F02) via upload de CSV com parser seguro.
 '''
 
 from django.core.exceptions import ValidationError
@@ -369,3 +383,163 @@ class OxideConsumption(TimestampedModel):
 
     def __str__(self):
         return '%s kg · %s' % (self.weight, self.paste_production)
+
+
+# --------------------------------------------------------------------- #
+# Sprint 6 — Masseira, Montagem, Formação (RF-M01, RF-MO01, RF-F01..F02)
+# --------------------------------------------------------------------- #
+class MassProduction(TimestampedModel):
+    '''
+    Apontamento da masseira (UI "Masseira") — RF-M01.
+
+    Campos: data, lote do chumbo, peso óxido, polaridade, peso descartado,
+    peso sobra de massa, peso adição de óxido, peso adição de massa
+    pronta, peso do aditivo.
+
+    Observação: `lead_lot` é guardado como CharField (informativo) por
+    enquanto; a Sprint 7 criará o model `LeadLot` e este campo passará a
+    ser uma FK para ele — revertendo um campo de texto é direto.
+    '''
+
+    mass_date = models.DateField(_('data'), db_index=True)
+    lead_lot = models.CharField(
+        _('lote do chumbo'), max_length=40,
+        help_text=_('Informar o lote do chumbo consumido (Cadastro completo na Sprint 7).'),
+    )
+    weight = models.DecimalField(
+        _('peso óxido (kg)'), max_digits=10, decimal_places=3, default=0,
+    )
+    polarity = models.CharField(
+        _('polaridade'), max_length=3, choices=Polarity.choices,
+    )
+    discarded_weight = models.DecimalField(
+        _('peso descartado (kg)'), max_digits=10, decimal_places=3, default=0,
+    )
+    mass_remainder_weight = models.DecimalField(
+        _('sobra de massa (kg)'), max_digits=10, decimal_places=3, default=0,
+    )
+    oxide_excess_weight = models.DecimalField(
+        _('adição de óxido (kg)'), max_digits=10, decimal_places=3, default=0,
+    )
+    ready_mass_excess_weight = models.DecimalField(
+        _('adição de massa pronta (kg)'), max_digits=10, decimal_places=3, default=0,
+    )
+    additive_weight = models.DecimalField(
+        _('peso do aditivo (kg)'), max_digits=10, decimal_places=3, default=0,
+    )
+
+    class Meta:
+        verbose_name = _('masseira')
+        verbose_name_plural = _('masseiras')
+        ordering = ('-mass_date', '-id')
+        indexes = [
+            models.Index(fields=('mass_date',)),
+            models.Index(fields=('polarity',)),
+            models.Index(fields=('lead_lot',)),
+        ]
+
+    def __str__(self):
+        return '%s · %s · %s (%s kg)' % (
+            self.mass_date.strftime('%d/%m/%Y'), self.lead_lot,
+            self.get_polarity_display(), self.weight,
+        )
+
+    @property
+    def balance_weight(self):
+        '''Balanço de massa — entrada (peso) − perdas/sobras declaradas.'''
+        losses = (
+            self.discarded_weight + self.mass_remainder_weight
+            + self.oxide_excess_weight + self.ready_mass_excess_weight
+        )
+        return self.weight - losses
+
+
+class Assembly(TimestampedModel):
+    '''
+    Apontamento de montagem (UI "Montagem") — RF-MO01.
+
+    Campos: data, modelo, lote, quantidade, EP positiva, EP negativa,
+    observação.
+    '''
+
+    assembly_date = models.DateField(_('data'), db_index=True)
+    grid_model = models.ForeignKey(
+        GridModel, on_delete=models.PROTECT, related_name='assemblies',
+        verbose_name=_('modelo'),
+    )
+    lot = models.CharField(_('lote'), max_length=40)
+    quantity = models.PositiveIntegerField(_('quantidade'))
+    positive_ep = models.ForeignKey(
+        PasteProduction, on_delete=models.PROTECT,
+        related_name='assemblies_positive', verbose_name=_('EP positiva'),
+        help_text=_('Empaste positivo utilizado (vinculado a um apontamento de empaste).'),
+        null=True, blank=True,
+    )
+    negative_ep = models.ForeignKey(
+        PasteProduction, on_delete=models.PROTECT,
+        related_name='assemblies_negative', verbose_name=_('EP negativa'),
+        help_text=_('Empaste negativo utilizado (vinculado a um apontamento de empaste).'),
+        null=True, blank=True,
+    )
+    note = models.TextField(_('observação'), blank=True, default='')
+
+    class Meta:
+        verbose_name = _('montagem')
+        verbose_name_plural = _('montagens')
+        ordering = ('-assembly_date', '-id')
+        indexes = [
+            models.Index(fields=('assembly_date',)),
+            models.Index(fields=('lot',)),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(quantity__gt=0),
+                name='assembly_quantity_positive',
+            ),
+        ]
+
+    def __str__(self):
+        return '%s · %s · %s (qtd %s)' % (
+            self.assembly_date.strftime('%d/%m/%Y'), self.grid_model.name,
+            self.lot, self.quantity,
+        )
+
+
+class Formation(TimestampedModel):
+    '''
+    Apontamento de formação (UI "Formação") — RF-F01.
+
+    Campos: data, número da mesa, lote da bateria, modelo da bateria,
+    quantidade. Importação por planilha via upload de CSV (RF-F02).
+    '''
+
+    formation_date = models.DateField(_('data'), db_index=True)
+    table_number = models.PositiveSmallIntegerField(_('número da mesa'))
+    battery_lot = models.CharField(_('lote da bateria'), max_length=40)
+    grid_model = models.ForeignKey(
+        GridModel, on_delete=models.PROTECT, related_name='formations',
+        verbose_name=_('modelo da bateria'),
+    )
+    quantity = models.PositiveIntegerField(_('quantidade'))
+
+    class Meta:
+        verbose_name = _('formação')
+        verbose_name_plural = _('formações')
+        ordering = ('-formation_date', '-table_number')
+        indexes = [
+            models.Index(fields=('formation_date',)),
+            models.Index(fields=('table_number',)),
+            models.Index(fields=('battery_lot',)),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(quantity__gt=0),
+                name='formation_quantity_positive',
+            ),
+        ]
+
+    def __str__(self):
+        return '%s · mesa %s · %s (qtd %s)' % (
+            self.formation_date.strftime('%d/%m/%Y'), self.table_number,
+            self.battery_lot, self.quantity,
+        )

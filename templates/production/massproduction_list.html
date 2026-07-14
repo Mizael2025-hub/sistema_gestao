@@ -1,0 +1,104 @@
+{% extends 'base/base.html' %}
+{% load base_tags %}
+
+{% block title %}{{ page_title }} — {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="list_head">
+    <div class="left">
+        <div class="page_heading">
+            <div class="title">{{ page_title }}</div>
+            <div class="subtitle">{{ page_subtitle }}</div>
+        </div>
+    </div>
+    <div class="right">
+        {% if perms.production.add_massproduction %}
+        <a href="{% url 'production:massproduction_create' %}" class="btn_apple"><i data-lucide="plus" class="icon_16"></i> Novo apontamento</a>
+        {% endif %}
+    </div>
+</div>
+
+{% if masses %}
+<div class="grid_kpi">
+    <div class="kpi_card">
+        <div class="kpi_label">Registros exibidos</div>
+        <div class="kpi_value">{{ page_obj.paginator.count|default:masses|length }}</div>
+    </div>
+    <div class="kpi_card">
+        <div class="kpi_label">Peso total (pág.)</div>
+        <div class="kpi_value">{{ total_weight|br_num:0 }} <span class="kpi_unit">kg</span></div>
+    </div>
+</div>
+{% endif %}
+
+{% include 'base/partials/filter_form.html' %}
+
+<div class="table_wrapper">
+    <table class="factory_table">
+        <thead>
+            <tr>
+                <th>Data</th>
+                <th>Lote do chumbo</th>
+                <th>Polaridade</th>
+                <th>Peso Óxido (kg)</th>
+                <th>Descartado (kg)</th>
+                <th>Sobra de massa (kg)</th>
+                <th>Adição de óxido (kg)</th>
+                <th>Adição de massa pronta (kg)</th>
+                <th>Aditivo (kg)</th>
+                <th class="actions">Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for m in masses %}
+            <tr onclick="window.location.href='{% url 'production:massproduction_detail' m.pk %}'">
+                <td class="col-strong">{{ m.mass_date|date:"d/m/Y" }}</td>
+                <td>{{ m.lead_lot|default:'—' }}</td>
+                <td>{% if m.polarity == 'POS' %}<span class="polarity_chip polarity-chip-pos">Positiva</span>{% else %}<span class="polarity_chip polarity-chip-neg">Negativa</span>{% endif %}</td>
+                <td>{{ m.weight|br_num:0 }}</td>
+                <td>{{ m.discarded_weight|br_num:0 }}</td>
+                <td>{{ m.mass_remainder_weight|br_num:0 }}</td>
+                <td>{{ m.oxide_excess_weight|br_num:0 }}</td>
+                <td>{{ m.ready_mass_excess_weight|br_num:0 }}</td>
+                <td>{{ m.additive_weight|br_num:2 }}</td>
+                <td class="actions" onclick="event.stopPropagation()">
+                    <div class="cell_actions">
+                        <a href="{% url 'production:massproduction_detail' m.pk %}" class="btn_apple btn_apple--ghost btn_apple--sm" title="Detalhe"><i data-lucide="eye" class="icon_16"></i></a>
+                        {% if perms.production.change_massproduction %}
+                        <a href="{% url 'production:massproduction_update' m.pk %}" class="btn_apple btn_apple--ghost btn_apple--sm" title="Editar"><i data-lucide="pencil" class="icon_16"></i></a>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="10">
+                <div class="empty_hint">
+                    <i data-lucide="flask-conical"></i>
+                    <div class="t">Nenhum apontamento de masseira</div>
+                    <div class="s">Registre um apontamento ou ajuste os filtros.</div>
+                </div>
+            </td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="pagination">
+    {% if page_obj.has_other_pages %}
+    <span class="count_muted">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+    <div class="pages">
+        {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}{% if request.GET %}&{{ request.GET.urlencode }}{% endif %}">‹ Anterior</a>{% endif %}
+        {% for n in page_obj.paginator.page_range %}
+            {% if n >= page_obj.number|add:'-2' and n <= page_obj.number|add:'2' %}
+                {% if n == page_obj.number %}<span class="current">{{ n }}</span>
+                {% else %}<a href="?page={{ n }}{% if request.GET %}&{{ request.GET.urlencode }}{% endif %}">{{ n }}</a>{% endif %}
+            {% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}{% if request.GET %}&{{ request.GET.urlencode }}{% endif %}">Próxima ›</a>{% endif %}
+    </div>
+    {% else %}
+    <span class="count_muted">{{ masses|length }} registro(s)</span>
+    <div></div>
+    {% endif %}
+</div>
+{% endblock %}

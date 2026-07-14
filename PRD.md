@@ -765,11 +765,11 @@ find /backups -name "*.tar.gz" -mtime +30 -delete
 
 ### Sprint 6 — Masseira, Montagem, Formação
 
-- [ ] Model `MassProduction` com todos os campos de masseira.
-- [ ] Model `Assembly`.
-- [ ] Model `Formation`.
-- [ ] Importação de planilha do Dropbox para Formação (parser seguro).
-- [ ] Admin e filtros para cada um.
+- [X] Model `MassProduction` com todos os campos de masseira.
+- [X] Model `Assembly`.
+- [X] Model `Formation`.
+- [X] Importação de planilha do Dropbox para Formação (parser seguro).
+- [X] Admin e filtros para cada um.
 
 ### Sprint 7 — Estoque de chumbo (entradas e estrutura 2D)
 

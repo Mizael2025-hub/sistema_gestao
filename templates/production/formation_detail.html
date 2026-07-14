@@ -1,0 +1,42 @@
+{% extends 'base/base.html' %}
+{% load base_tags %}
+
+{% block title %}Formação — {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page_heading">
+    <div class="title">Formação — Mesa {{ formation.table_number }}</div>
+    <div class="subtitle"><i data-lucide="battery-charging" class="icon_16"></i> {{ formation.formation_date|date:"d/m/Y" }}</div>
+</div>
+
+<div class="grid_kpi">
+    <div class="kpi_card"><div class="kpi_label">Mesa</div><div class="kpi_value" style="font-size:22px">{{ formation.table_number }}</div></div>
+    <div class="kpi_card"><div class="kpi_label">Lote da bateria</div><div class="kpi_value" style="font-size:18px">{{ formation.battery_lot }}</div></div>
+    <div class="kpi_card"><div class="kpi_label">Modelo da bateria</div><div class="kpi_value" style="font-size:18px">{{ formation.grid_model|default:'—' }}</div></div>
+    <div class="kpi_card"><div class="kpi_label">Quantidade</div><div class="kpi_value">{{ formation.quantity|br_num }}</div></div>
+</div>
+
+<div class="table_wrapper">
+    <table class="factory_table">
+        <tbody>
+            <tr><th style="width:240px">Data</th><td>{{ formation.formation_date|date:"d/m/Y" }}</td></tr>
+            <tr><th>Número da mesa</th><td>{{ formation.table_number }}</td></tr>
+            <tr><th>Lote da bateria</th><td><strong>{{ formation.battery_lot }}</strong></td></tr>
+            <tr><th>Modelo da bateria</th><td>{{ formation.grid_model|default:'—' }}</td></tr>
+            <tr><th>Quantidade</th><td>{{ formation.quantity|br_num }}</td></tr>
+            <tr><th>Criado em</th><td>{{ formation.created_at|date:"d/m/Y H:i" }}</td></tr>
+            <tr><th>Atualizado em</th><td>{{ formation.updated_at|date:"d/m/Y H:i" }}</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="btn_row">
+    <a href="{% url 'production:formation_list' %}" class="btn_apple btn_apple--ghost"><i data-lucide="arrow-left" class="icon_16"></i> Voltar à listagem</a>
+    {% if perms.production.change_formation %}
+    <a href="{% url 'production:formation_update' formation.pk %}" class="btn_apple"><i data-lucide="pencil" class="icon_16"></i> Editar</a>
+    {% endif %}
+    {% if perms.production.delete_formation %}
+    <a href="{% url 'production:formation_delete' formation.pk %}" class="btn_apple btn_apple--erro"><i data-lucide="trash-2" class="icon_16"></i> Excluir</a>
+    {% endif %}
+</div>
+{% endblock %}

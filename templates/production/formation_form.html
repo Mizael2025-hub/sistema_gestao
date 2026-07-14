@@ -1,0 +1,48 @@
+{% extends 'base/base.html' %}
+{% load base_tags %}
+
+{% block title %}{{ page_title }} — {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page_heading">
+    <div class="title">{{ page_title }}</div>
+    <div class="subtitle">{{ page_subtitle }}</div>
+</div>
+
+<form method="post" class="form_box">
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="login_errors">{{ form.non_field_errors }}</div>{% endif %}
+
+    <div class="form_grid">
+        <div class="input_group">
+            <label class="input_label" for="id_formation_date">Data</label>
+            {{ form.formation_date|add_class:"industrial_input" }}
+            {% if form.formation_date.errors %}<ul class="field_errors">{% for e in form.formation_date.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+        <div class="input_group">
+            <label class="input_label" for="id_table_number">Número da mesa</label>
+            {{ form.table_number|add_class:"industrial_input" }}
+            {% if form.table_number.errors %}<ul class="field_errors">{% for e in form.table_number.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+        <div class="input_group">
+            <label class="input_label" for="id_battery_lot">Lote da bateria</label>
+            {{ form.battery_lot|add_class:"industrial_input" }}
+            {% if form.battery_lot.errors %}<ul class="field_errors">{% for e in form.battery_lot.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+        <div class="input_group">
+            <label class="input_label" for="id_grid_model">Modelo da bateria</label>
+            {{ form.grid_model|add_class:"industrial_input" }}
+        </div>
+        <div class="input_group">
+            <label class="input_label" for="id_quantity">Quantidade</label>
+            {{ form.quantity|add_class:"industrial_input" }}
+            {% if form.quantity.errors %}<ul class="field_errors">{% for e in form.quantity.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+    </div>
+
+    <div class="btn_row">
+        <button type="submit" class="btn_apple"><i data-lucide="save" class="icon_16"></i> Salvar formação</button>
+        <a href="{% url 'production:formation_list' %}" class="btn_apple btn_apple--ghost"><i data-lucide="x" class="icon_16"></i> Cancelar</a>
+    </div>
+</form>
+{% endblock %}

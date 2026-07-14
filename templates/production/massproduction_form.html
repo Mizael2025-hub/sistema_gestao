@@ -1,0 +1,62 @@
+{% extends 'base/base.html' %}
+{% load base_tags %}
+
+{% block title %}{{ page_title }} — {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page_heading">
+    <div class="title">{{ page_title }}</div>
+    <div class="subtitle">{{ page_subtitle }}</div>
+</div>
+
+<form method="post" class="form_box">
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="login_errors">{{ form.non_field_errors }}</div>{% endif %}
+
+    <div class="form_grid">
+        <div class="input_group">
+            <label class="input_label" for="id_mass_date">Data</label>
+            {{ form.mass_date|add_class:"industrial_input" }}
+            {% if form.mass_date.errors %}<ul class="field_errors">{% for e in form.mass_date.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+        <div class="input_group">
+            <label class="input_label" for="id_lead_lot">Lote do chumbo</label>
+            {{ form.lead_lot|add_class:"industrial_input" }}
+            <span class="help_text">Lote do chumbo consumido (Cadastro completo na Sprint 7).</span>
+        </div>
+        <div class="input_group">
+            <label class="input_label" for="id_polarity">Polaridade</label>
+            {{ form.polarity|add_class:"industrial_input" }}
+        </div>
+        <div class="input_group">
+            <label class="input_label" for="id_weight">Peso Óxido (kg)</label>
+            {{ form.weight|add_class:"industrial_input" }}
+        </div>
+        <div class="input_group">
+            <label class="input_label" for="id_discarded_weight">Peso descartado (kg)</label>
+            {{ form.discarded_weight|add_class:"industrial_input" }}
+        </div>
+        <div class="input_group">
+            <label class="input_label" for="id_mass_remainder_weight">Sobra de massa (kg)</label>
+            {{ form.mass_remainder_weight|add_class:"industrial_input" }}
+        </div>
+        <div class="input_group">
+            <label class="input_label" for="id_oxide_excess_weight">Adição de óxido (kg)</label>
+            {{ form.oxide_excess_weight|add_class:"industrial_input" }}
+        </div>
+        <div class="input_group">
+            <label class="input_label" for="id_ready_mass_excess_weight">Adição de massa pronta (kg)</label>
+            {{ form.ready_mass_excess_weight|add_class:"industrial_input" }}
+        </div>
+        <div class="input_group">
+            <label class="input_label" for="id_additive_weight">Peso do aditivo (kg)</label>
+            {{ form.additive_weight|add_class:"industrial_input" }}
+        </div>
+    </div>
+
+    <div class="btn_row">
+        <button type="submit" class="btn_apple"><i data-lucide="save" class="icon_16"></i> Salvar apontamento</button>
+        <a href="{% url 'production:massproduction_list' %}" class="btn_apple btn_apple--ghost"><i data-lucide="x" class="icon_16"></i> Cancelar</a>
+    </div>
+</form>
+{% endblock %}

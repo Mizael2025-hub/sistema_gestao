@@ -1,0 +1,48 @@
+{% extends 'base/base.html' %}
+{% load base_tags %}
+
+{% block title %}{{ page_title }} — {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page_heading">
+    <div class="title">{{ page_title }}</div>
+    <div class="subtitle">{{ page_subtitle }}</div>
+</div>
+
+<div class="factory_alert factory_alert--info">
+    <div class="pulse_dot" style="background: var(--status_info);"></div>
+    <span><strong>RF-F02:</strong> importe um arquivo <strong>CSV</strong> (exporte a planilha do Dropbox como CSV, separador <code>,</code> ou <code>;</code>). Linhas inválidas são ignoradas sem abortar o lote.</span>
+</div>
+
+<form method="post" enctype="multipart/form-data" class="form_box">
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="login_errors">{{ form.non_field_errors }}</div>{% endif %}
+
+    <div class="input_group" style="margin-bottom:16px">
+        <label class="input_label" for="id_file">{{ form.file.label }}</label>
+        {{ form.file|add_class:"industrial_input" }}
+        {% if form.file.help_text %}<span class="help_text">{{ form.file.help_text }}</span>{% endif %}
+        {% if form.file.errors %}<ul class="field_errors">{% for e in form.file.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+    </div>
+
+    <div class="table_wrapper" style="margin-bottom:16px">
+        <table class="factory_table">
+            <thead>
+                <tr><th>Coluna</th><th>Cabeçalho aceito (sem acento, minúsculas)</th></tr>
+            </thead>
+            <tbody>
+                <tr><th>Data da formação</th><td><code>data</code> ou <code>data_formacao</code> (formats: aaaa-mm-dd, dd/mm/aaaa)</td></tr>
+                <tr><th>Número da mesa</th><td><code>mesa</code> ou <code>numero_mesa</code> (inteiro)</td></tr>
+                <tr><th>Lote da bateria</th><td><code>lote</code> ou <code>lote_bateria</code> (texto)</td></tr>
+                <tr><th>Modelo da bateria</th><td><code>modelo</code> ou <code>modelo_bateria</code> (deve existir no cadastro)</td></tr>
+                <tr><th>Quantidade</th><td><code>quantidade</code> ou <code>qtd</code> (inteiro positivo)</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="btn_row">
+        <button type="submit" class="btn_apple"><i data-lucide="upload" class="icon_16"></i> Importar CSV</button>
+        <a href="{% url 'production:formation_list' %}" class="btn_apple btn_apple--ghost"><i data-lucide="x" class="icon_16"></i> Cancelar</a>
+    </div>
+</form>
+{% endblock %}

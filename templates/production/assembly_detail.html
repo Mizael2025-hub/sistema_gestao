@@ -1,0 +1,45 @@
+{% extends 'base/base.html' %}
+{% load base_tags %}
+
+{% block title %}Montagem — {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="page_heading">
+    <div class="title">Montagem — Lote {{ assembly.lot }}</div>
+    <div class="subtitle"><i data-lucide="package" class="icon_16"></i> {{ assembly.assembly_date|date:"d/m/Y" }}</div>
+</div>
+
+<div class="grid_kpi">
+    <div class="kpi_card"><div class="kpi_label">Modelo</div><div class="kpi_value" style="font-size:18px">{{ assembly.grid_model|default:'—' }}</div></div>
+    <div class="kpi_card"><div class="kpi_label">Lote</div><div class="kpi_value" style="font-size:22px">{{ assembly.lot }}</div></div>
+    <div class="kpi_card"><div class="kpi_label">Quantidade</div><div class="kpi_value">{{ assembly.quantity|br_num }}</div></div>
+    <div class="kpi_card"><div class="kpi_label">EP positiva</div><div class="kpi_value" style="font-size:18px">{% if assembly.positive_ep %}{{ assembly.positive_ep.lot }}{% else %}—{% endif %}</div></div>
+    <div class="kpi_card"><div class="kpi_label">EP negativa</div><div class="kpi_value" style="font-size:18px">{% if assembly.negative_ep %}{{ assembly.negative_ep.lot }}{% else %}—{% endif %}</div></div>
+</div>
+
+<div class="table_wrapper">
+    <table class="factory_table">
+        <tbody>
+            <tr><th style="width:240px">Data</th><td>{{ assembly.assembly_date|date:"d/m/Y" }}</td></tr>
+            <tr><th>Modelo</th><td>{{ assembly.grid_model|default:'—' }}</td></tr>
+            <tr><th>Lote</th><td><strong>{{ assembly.lot }}</strong></td></tr>
+            <tr><th>Quantidade</th><td>{{ assembly.quantity|br_num }}</td></tr>
+            <tr><th>EP positiva</th><td>{% if assembly.positive_ep %}<a href="{% url 'production:pasteproduction_detail' assembly.positive_ep.pk %}">{{ assembly.positive_ep.lot }}</a>{% else %}—{% endif %}</td></tr>
+            <tr><th>EP negativa</th><td>{% if assembly.negative_ep %}<a href="{% url 'production:pasteproduction_detail' assembly.negative_ep.pk %}">{{ assembly.negative_ep.lot }}</a>{% else %}—{% endif %}</td></tr>
+            {% if assembly.note %}<tr><th>Observação</th><td>{{ assembly.note|linebreaksbr }}</td></tr>{% endif %}
+            <tr><th>Criado em</th><td>{{ assembly.created_at|date:"d/m/Y H:i" }}</td></tr>
+            <tr><th>Atualizado em</th><td>{{ assembly.updated_at|date:"d/m/Y H:i" }}</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="btn_row">
+    <a href="{% url 'production:assembly_list' %}" class="btn_apple btn_apple--ghost"><i data-lucide="arrow-left" class="icon_16"></i> Voltar à listagem</a>
+    {% if perms.production.change_assembly %}
+    <a href="{% url 'production:assembly_update' assembly.pk %}" class="btn_apple"><i data-lucide="pencil" class="icon_16"></i> Editar</a>
+    {% endif %}
+    {% if perms.production.delete_assembly %}
+    <a href="{% url 'production:assembly_delete' assembly.pk %}" class="btn_apple btn_apple--erro"><i data-lucide="trash-2" class="icon_16"></i> Excluir</a>
+    {% endif %}
+</div>
+{% endblock %}

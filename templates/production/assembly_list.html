@@ -1,0 +1,87 @@
+{% extends 'base/base.html' %}
+{% load base_tags %}
+
+{% block title %}{{ page_title }} — {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="list_head">
+    <div class="left">
+        <div class="page_heading">
+            <div class="title">{{ page_title }}</div>
+            <div class="subtitle">{{ page_subtitle }}</div>
+        </div>
+    </div>
+    <div class="right">
+        {% if perms.production.add_assembly %}
+        <a href="{% url 'production:assembly_create' %}" class="btn_apple"><i data-lucide="plus" class="icon_16"></i> Nova montagem</a>
+        {% endif %}
+    </div>
+</div>
+
+{% include 'base/partials/filter_form.html' %}
+
+<div class="table_wrapper">
+    <table class="factory_table">
+        <thead>
+            <tr>
+                <th>Data</th>
+                <th>Modelo</th>
+                <th>Lote</th>
+                <th>Quantidade</th>
+                <th>EP positiva</th>
+                <th>EP negativa</th>
+                <th>Observação</th>
+                <th class="actions">Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for a in assemblies %}
+            <tr onclick="window.location.href='{% url 'production:assembly_detail' a.pk %}'">
+                <td class="col-strong">{{ a.assembly_date|date:"d/m/Y" }}</td>
+                <td>{{ a.grid_model|default:'—' }}</td>
+                <td><strong>{{ a.lot }}</strong></td>
+                <td>{{ a.quantity|br_num }}</td>
+                <td>{% if a.positive_ep %}{{ a.positive_ep.lot }}{% else %}—{% endif %}</td>
+                <td>{% if a.negative_ep %}{{ a.negative_ep.lot }}{% else %}—{% endif %}</td>
+                <td>{{ a.note|truncatechars:40|default:'—' }}</td>
+                <td class="actions" onclick="event.stopPropagation()">
+                    <div class="cell_actions">
+                        <a href="{% url 'production:assembly_detail' a.pk %}" class="btn_apple btn_apple--ghost btn_apple--sm" title="Detalhe"><i data-lucide="eye" class="icon_16"></i></a>
+                        {% if perms.production.change_assembly %}
+                        <a href="{% url 'production:assembly_update' a.pk %}" class="btn_apple btn_apple--ghost btn_apple--sm" title="Editar"><i data-lucide="pencil" class="icon_16"></i></a>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="8">
+                <div class="empty_hint">
+                    <i data-lucide="package"></i>
+                    <div class="t">Nenhuma montagem registrada</div>
+                    <div class="s">Registre uma montagem ou ajuste os filtros.</div>
+                </div>
+            </td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="pagination">
+    {% if page_obj.has_other_pages %}
+    <span class="count_muted">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+    <div class="pages">
+        {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}{% if request.GET %}&{{ request.GET.urlencode }}{% endif %}">‹ Anterior</a>{% endif %}
+        {% for n in page_obj.paginator.page_range %}
+            {% if n >= page_obj.number|add:'-2' and n <= page_obj.number|add:'2' %}
+                {% if n == page_obj.number %}<span class="current">{{ n }}</span>
+                {% else %}<a href="?page={{ n }}{% if request.GET %}&{{ request.GET.urlencode }}{% endif %}">{{ n }}</a>{% endif %}
+            {% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}{% if request.GET %}&{{ request.GET.urlencode }}{% endif %}">Próxima ›</a>{% endif %}
+    </div>
+    {% else %}
+    <span class="count_muted">{{ assemblies|length }} registro(s)</span>
+    <div></div>
+    {% endif %}
+</div>
+{% endblock %}

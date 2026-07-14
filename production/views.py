@@ -4,28 +4,41 @@ Views do app production.
 Sprint 3: Teleiras — produção de grade (RF-T01..T04).
 Sprint 4: Paradas de máquina (RF-P01..P04).
 Sprint 5: Empaste e consumos (RF-E01..E04).
+Sprint 6: Masseira, Montagem, Formação (RF-M01, RF-MO01, RF-F01..F02).
 
 Fluxo de parada (RF-P01):
 1. Localizar a produção por data/operador/máquina (/producao/paradas/localizar/).
 2. Selecionar o apontamento → registrar a parada (/producao/paradas/novo/?gp=<id>).
 '''
 
+import csv
+import io
+from datetime import datetime as _datetime
+
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views.generic import (
-    ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView,
+    ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView, FormView,
 )
 
 from base.view_mixins import FilteredListMixin, PageContextMixin
 from production.forms import (
+    AssemblyFilterForm, AssemblyForm,
+    FormationFilterForm, FormationForm, FormationImportForm,
     GridProductionFilterForm, GridProductionForm,
     GridProductionLocateForm, MachineStopFilterForm, MachineStopForm,
+    MassProductionFilterForm, MassProductionForm,
     PasteProductionFilterForm, PasteProductionForm,
 )
-from production.models import GridProduction, MachineStop, PasteProduction
+from production.models import (
+    Assembly, Formation, GridProduction, MachineStop, MassProduction, PasteProduction,
+)
+from catalogs.models import GridModel  # utilizado pela importação de Formação (RF-F02)
 
 
 # --------------------------------------------------------------------- #
@@ -346,3 +359,380 @@ class PasteProductionDeleteView(LoginRequiredMixin, PermissionRequiredMixin, Pag
 
     def get_success_url(self):
         return reverse_lazy('production:pasteproduction_list')
+
+
+# --------------------------------------------------------------------- #
+# Sprint 6 — Masseira, Montagem, Formação (RF-M01, RF-MO01, RF-F01..F02)
+# --------------------------------------------------------------------- #
+# ---- Masseira (RF-M01) ---------------------------------------------- #
+class MassProductionListView(LoginRequiredMixin, FilteredListMixin, PageContextMixin, ListView):
+    model = MassProduction
+    template_name = 'production/massproduction_list.html'
+    context_object_name = 'masses'
+    paginate_by = 25
+    filter_form_class = MassProductionFilterForm
+
+    page_title = 'Masseira'
+    page_subtitle = 'Apontamentos da masseira'
+    page_icon = 'flask-conical'
+
+    def get_queryset(self):
+        return super().get_queryset().order_by('-mass_date', '-id')
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        page = ctx.get('page_obj')
+        objs = list(page.object_list) if page else list(ctx.get('masses', []))
+        if objs:
+            ctx['total_weight'] = sum(o.weight for o in objs)
+        else:
+            ctx['total_weight'] = 0
+        return ctx
+
+
+class MassProductionDetailView(LoginRequiredMixin, PageContextMixin, DetailView):
+    model = MassProduction
+    template_name = 'production/massproduction_detail.html'
+    context_object_name = 'mass'
+
+    page_title = 'Detalhe da masseira'
+    page_subtitle = 'Ficha do apontamento'
+    page_icon = 'flask-conical'
+
+
+class MassProductionCreateView(LoginRequiredMixin, PermissionRequiredMixin, PageContextMixin, CreateView):
+    model = MassProduction
+    form_class = MassProductionForm
+    template_name = 'production/massproduction_form.html'
+    success_url = reverse_lazy('production:massproduction_list')
+    permission_required = 'production.add_massproduction'
+
+    page_title = 'Nova masseira'
+    page_subtitle = 'Registre o apontamento da masseira'
+    page_icon = 'flask-conical'
+
+
+class MassProductionUpdateView(LoginRequiredMixin, PermissionRequiredMixin, PageContextMixin, UpdateView):
+    model = MassProduction
+    form_class = MassProductionForm
+    template_name = 'production/massproduction_form.html'
+    permission_required = 'production.change_massproduction'
+
+    page_title = 'Editar masseira'
+    page_subtitle = 'Altere os dados do apontamento'
+    page_icon = 'flask-conical'
+
+    def get_success_url(self):
+        return reverse_lazy('production:massproduction_detail', kwargs={'pk': self.object.pk})
+
+
+class MassProductionDeleteView(LoginRequiredMixin, PermissionRequiredMixin, PageContextMixin, DeleteView):
+    model = MassProduction
+    template_name = 'production/massproduction_confirm_delete.html'
+    permission_required = 'production.delete_massproduction'
+
+    page_title = 'Excluir masseira'
+    page_subtitle = 'Confirme a exclusão'
+    page_icon = 'trash-2'
+
+    def get_success_url(self):
+        return reverse_lazy('production:massproduction_list')
+
+
+# ---- Montagem (RF-MO01) --------------------------------------------- #
+class AssemblyListView(LoginRequiredMixin, FilteredListMixin, PageContextMixin, ListView):
+    model = Assembly
+    template_name = 'production/assembly_list.html'
+    context_object_name = 'assemblies'
+    paginate_by = 25
+    filter_form_class = AssemblyFilterForm
+
+    page_title = 'Montagem'
+    page_subtitle = 'Apontamentos de montagem'
+    page_icon = 'package'
+
+    def get_queryset(self):
+        return super().get_queryset().select_related(
+            'grid_model', 'positive_ep', 'negative_ep',
+        ).order_by('-assembly_date', '-id')
+
+
+class AssemblyDetailView(LoginRequiredMixin, PageContextMixin, DetailView):
+    model = Assembly
+    template_name = 'production/assembly_detail.html'
+    context_object_name = 'assembly'
+
+    page_title = 'Detalhe da montagem'
+    page_subtitle = 'Ficha do apontamento'
+    page_icon = 'package'
+
+
+class AssemblyCreateView(LoginRequiredMixin, PermissionRequiredMixin, PageContextMixin, CreateView):
+    model = Assembly
+    form_class = AssemblyForm
+    template_name = 'production/assembly_form.html'
+    success_url = reverse_lazy('production:assembly_list')
+    permission_required = 'production.add_assembly'
+
+    page_title = 'Nova montagem'
+    page_subtitle = 'Registre a montagem'
+    page_icon = 'package'
+
+
+class AssemblyUpdateView(LoginRequiredMixin, PermissionRequiredMixin, PageContextMixin, UpdateView):
+    model = Assembly
+    form_class = AssemblyForm
+    template_name = 'production/assembly_form.html'
+    permission_required = 'production.change_assembly'
+
+    page_title = 'Editar montagem'
+    page_subtitle = 'Altere os dados da montagem'
+    page_icon = 'package'
+
+    def get_success_url(self):
+        return reverse_lazy('production:assembly_detail', kwargs={'pk': self.object.pk})
+
+
+class AssemblyDeleteView(LoginRequiredMixin, PermissionRequiredMixin, PageContextMixin, DeleteView):
+    model = Assembly
+    template_name = 'production/assembly_confirm_delete.html'
+    permission_required = 'production.delete_assembly'
+
+    page_title = 'Excluir montagem'
+    page_subtitle = 'Confirme a exclusão'
+    page_icon = 'trash-2'
+
+    def get_success_url(self):
+        return reverse_lazy('production:assembly_list')
+
+
+# ---- Formação (RF-F01..F02) ----------------------------------------- #
+class FormationListView(LoginRequiredMixin, FilteredListMixin, PageContextMixin, ListView):
+    model = Formation
+    template_name = 'production/formation_list.html'
+    context_object_name = 'formations'
+    paginate_by = 25
+    filter_form_class = FormationFilterForm
+
+    page_title = 'Formação'
+    page_subtitle = 'Apontamentos de formação'
+    page_icon = 'battery-charging'
+
+    def get_queryset(self):
+        return super().get_queryset().select_related('grid_model').order_by('-formation_date', '-table_number')
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        page = ctx.get('page_obj')
+        objs = list(page.object_list) if page else list(ctx.get('formations', []))
+        ctx['total_quantity'] = sum(o.quantity for o in objs) if objs else 0
+        return ctx
+
+
+class FormationDetailView(LoginRequiredMixin, PageContextMixin, DetailView):
+    model = Formation
+    template_name = 'production/formation_detail.html'
+    context_object_name = 'formation'
+
+    page_title = 'Detalhe da formação'
+    page_subtitle = 'Ficha do apontamento'
+    page_icon = 'battery-charging'
+
+
+class FormationCreateView(LoginRequiredMixin, PermissionRequiredMixin, PageContextMixin, CreateView):
+    model = Formation
+    form_class = FormationForm
+    template_name = 'production/formation_form.html'
+    success_url = reverse_lazy('production:formation_list')
+    permission_required = 'production.add_formation'
+
+    page_title = 'Nova formação'
+    page_subtitle = 'Registre a formação'
+    page_icon = 'battery-charging'
+
+
+class FormationUpdateView(LoginRequiredMixin, PermissionRequiredMixin, PageContextMixin, UpdateView):
+    model = Formation
+    form_class = FormationForm
+    template_name = 'production/formation_form.html'
+    permission_required = 'production.change_formation'
+
+    page_title = 'Editar formação'
+    page_subtitle = 'Altere os dados da formação'
+    page_icon = 'battery-charging'
+
+    def get_success_url(self):
+        return reverse_lazy('production:formation_detail', kwargs={'pk': self.object.pk})
+
+
+class FormationDeleteView(LoginRequiredMixin, PermissionRequiredMixin, PageContextMixin, DeleteView):
+    model = Formation
+    template_name = 'production/formation_confirm_delete.html'
+    permission_required = 'production.delete_formation'
+
+    page_title = 'Excluir formação'
+    page_subtitle = 'Confirme a exclusão'
+    page_icon = 'trash-2'
+
+    def get_success_url(self):
+        return reverse_lazy('production:formation_list')
+
+
+class FormationImportView(LoginRequiredMixin, PermissionRequiredMixin, PageContextMixin, FormView):
+    '''
+    Importação por planilha (CSV) para Formação — RF-F02.
+
+    Parser seguro: detecta delimitador, valida linha a linha, cria em lote
+    dentro de transação atômica e reporta erros por linha (sem abortar tudo).
+    '''
+
+    form_class = FormationImportForm
+    template_name = 'production/formation_import.html'
+    permission_required = 'production.add_formation'
+    success_url = reverse_lazy('production:formation_list')
+
+    page_title = 'Importar formações (planilha)'
+    page_subtitle = 'Importe registros de formação a partir de um CSV'
+    page_icon = 'upload'
+
+    # Mapeamento de cabeçalhos aceitos (sinônimos minúsculos sem acento).
+    HEADER_ALIASES = {
+        'data': 'formation_date',
+        'data_formacao': 'formation_date',
+        'mesa': 'table_number',
+        'numero_mesa': 'table_number',
+        'lote': 'battery_lot',
+        'lote_bateria': 'battery_lot',
+        'modelo': 'grid_model',
+        'modelo_bateria': 'grid_model',
+        'quantidade': 'quantity',
+        'qtd': 'quantity',
+    }
+
+    def form_valid(self, form):
+        uploaded = form.cleaned_data['file']
+        decoded = uploaded.read().decode('utf-8-sig', errors='replace')
+        reader = self._build_reader(decoded)
+        rows = list(reader)
+        if not rows:
+            messages.error(self.request, 'Arquivo vazio.')
+            return self.form_invalid(form)
+
+        header = [self._norm(h) for h in rows[0]]
+        colmap = self._map_headers(header)
+        missing = {'formation_date', 'table_number', 'battery_lot', 'grid_model', 'quantity'} - set(colmap.values())
+        if missing:
+            messages.error(
+                self.request,
+                'Cabeçalhos insuficientes. Faltam colunas: %s. '
+                'Esperado: data, mesa, lote, modelo, quantidade.' % ', '.join(sorted(missing)),
+            )
+            return self.form_invalid(form)
+
+        models_index = {gm.name.upper(): gm for gm in GridModel.objects.all()}
+        created, errors = 0, []
+        with transaction.atomic():
+            for i, row in enumerate(rows[1:], start=2):
+                try:
+                    rec = self._row_to_record(row, header, colmap, models_index)
+                except _ImportRowError as exc:
+                    errors.append('Linha %d: %s' % (i, exc))
+                    continue
+                try:
+                    rec.full_clean()
+                    rec.save()
+                    created += 1
+                except ValidationError as exc:
+                    errors.append('Linha %d: %s' % (i, '; '.join(exc.messages)))
+
+        if created:
+            messages.success(self.request, 'Importação concluída: %d registro(s) criado(s).' % created)
+        if errors:
+            preview = errors[:20]
+            more = '' if len(errors) <= 20 else ' (mais %d linha(s) com erro)' % (len(errors) - 20)
+            messages.error(
+                self.request,
+                '%d linha(s) ignorada(s):%s\n%s' % (len(errors), more, '\n'.join(preview)),
+            )
+        if not created and not errors:
+            messages.warning(self.request, 'Nenhuma linha de dados encontrada.')
+        return super().form_valid(form)
+
+    # ---- Helpers do parser seguro -------------------------------------
+    @staticmethod
+    def _norm(text):
+        import unicodedata
+        s = unicodedata.normalize('NFKD', text or '').encode('ascii', 'ignore').decode('ascii')
+        return s.strip().lower().replace(' ', '_')
+
+    @staticmethod
+    def _build_reader(text):
+        sample = text.splitlines()[:5]
+        try:
+            dialect = csv.Sniffer().sniff('\n'.join(sample), delimiters=',;\t|')
+        except csv.Error:
+            dialect = csv.excel
+        return csv.reader(io.StringIO(text), dialect)
+
+    def _map_headers(self, header):
+        colmap = {}
+        for idx, h in enumerate(header):
+            field = self.HEADER_ALIASES.get(h)
+            if field:
+                colmap[idx] = field
+        return colmap
+
+    @staticmethod
+    def _row_to_record(row, header, colmap, models_index):
+        data = {}
+        for idx, field in colmap.items():
+            if idx < len(row):
+                data[field] = (row[idx] or '').strip()
+        if not any(data.values()):
+            raise _ImportRowError('linha vazia')
+        # data
+        raw_date = data.get('formation_date', '')
+        formation_date = FormationImportView._parse_date(raw_date)
+        if not formation_date:
+            raise _ImportRowError('data inválida "%s"' % raw_date)
+        # mesa
+        try:
+            table_number = int(str(data.get('table_number', '')).replace('.', '').replace(',', ''))
+        except ValueError:
+            raise _ImportRowError('número da mesa inválido "%s"' % data.get('table_number'))
+        if table_number <= 0:
+            raise _ImportRowError('número da mesa deve ser positivo')
+        # lote
+        battery_lot = data.get('battery_lot', '')
+        if not battery_lot:
+            raise _ImportRowError('lote da bateria vazio')
+        # modelo
+        gm = models_index.get(str(data.get('grid_model', '')).strip().upper())
+        if gm is None:
+            raise _ImportRowError('modelo "%s" não cadastrado' % data.get('grid_model'))
+        # quantidade
+        try:
+            quantity = int(str(data.get('quantity', '')).replace('.', '').replace(',', ''))
+        except ValueError:
+            raise _ImportRowError('quantidade inválida "%s"' % data.get('quantity'))
+        if quantity <= 0:
+            raise _ImportRowError('quantidade deve ser positiva')
+        return Formation(
+            formation_date=formation_date, table_number=table_number,
+            battery_lot=battery_lot, grid_model=gm, quantity=quantity,
+        )
+
+    @staticmethod
+    def _parse_date(value):
+        value = (value or '').strip()
+        for fmt in ('%Y-%m-%d', '%d/%m/%Y', '%d-%m-%Y', '%Y/%m/%d'):
+            try:
+                return _datetime.strptime(value, fmt).date()
+            except ValueError:
+                continue
+        return None
+
+
+class _ImportRowError(Exception):
+    '''Erro de uma linha específica durante importação (não aborta o lote).'''
+    pass

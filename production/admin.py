@@ -4,11 +4,14 @@ Admin do app production.
 Sprint 3: GridProduction.
 Sprint 4: MachineStop (paradas de máquina) + inline no GridProduction.
 Sprint 5: PasteProduction (empaste) + inline de OxideConsumption.
+Sprint 6: MassProduction, Assembly, Formation (masseira, montagem, formação).
 '''
 
 from django.contrib import admin
 
-from production.models import GridProduction, MachineStop, OxideConsumption, PasteProduction
+from production.models import (
+    Assembly, Formation, GridProduction, MachineStop, MassProduction, OxideConsumption, PasteProduction,
+)
 
 
 class MachineStopInline(admin.TabularInline):
@@ -83,3 +86,47 @@ class PasteProductionAdmin(admin.ModelAdmin):
     def oxide_weight(self, obj):
         return obj.oxide_weight
     oxide_weight.short_description = 'Óxido (kg)'
+
+
+# --------------------------------------------------------------------- #
+# Sprint 6 — Masseira, Montagem, Formação
+# --------------------------------------------------------------------- #
+@admin.register(MassProduction)
+class MassProductionAdmin(admin.ModelAdmin):
+    list_display = (
+        'mass_date', 'lead_lot', 'polarity', 'weight', 'discarded_weight',
+        'mass_remainder_weight', 'oxide_excess_weight', 'ready_mass_excess_weight',
+        'additive_weight', 'balance_weight', 'created_at',
+    )
+    list_filter = ('mass_date', 'polarity')
+    search_fields = ('lead_lot',)
+    list_select_related = ()
+    date_hierarchy = 'mass_date'
+    ordering = ('-mass_date', '-id')
+
+
+@admin.register(Assembly)
+class AssemblyAdmin(admin.ModelAdmin):
+    list_display = (
+        'assembly_date', 'grid_model', 'lot', 'quantity', 'positive_ep',
+        'negative_ep', 'created_at',
+    )
+    list_filter = ('assembly_date', 'grid_model')
+    search_fields = ('lot', 'grid_model__name', 'positive_ep__lot', 'negative_ep__lot', 'note')
+    list_select_related = ('grid_model', 'positive_ep', 'negative_ep')
+    date_hierarchy = 'assembly_date'
+    ordering = ('-assembly_date', '-id')
+    autocomplete_fields = ('positive_ep', 'negative_ep')
+
+
+@admin.register(Formation)
+class FormationAdmin(admin.ModelAdmin):
+    list_display = (
+        'formation_date', 'table_number', 'battery_lot', 'grid_model',
+        'quantity', 'created_at',
+    )
+    list_filter = ('formation_date', 'grid_model', 'table_number')
+    search_fields = ('battery_lot', 'grid_model__name')
+    list_select_related = ('grid_model',)
+    date_hierarchy = 'formation_date'
+    ordering = ('-formation_date', '-table_number')
